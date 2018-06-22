@@ -6,23 +6,27 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-from Tkinter import *
-from ttk import *#Frame, Button, Label, Style, Scrollbar
-import tkFileDialog
-import tkFont
+from tkinter import *
+from tkinter.ttk import * # Frame, Button, Label, Style, Scrollbar
+from tkinter import filedialog as tkFileDialog
+from tkinter import font as tkFont
+from tkinter import messagebox as tkMessageBox
+
 import re
 from collections import deque
 import pickle
 import os.path
 import platform
+import codecs
+
 from utils.recommend import *
-import tkMessageBox
 
 
 class Example(Frame):
+    """TODO 换成更贴切的类名"""
     def __init__(self, parent):
         Frame.__init__(self, parent)
-        self.Version = "YEDDA-V1.0 Annotator"
+        self.Version = u"YEDDA-V1.0 标注工具"
         self.OS = platform.system().lower()
         self.parent = parent
         self.fileName = ""
@@ -44,7 +48,7 @@ class Example(Frame):
         self.controlCommand = {'q':"unTag", 'ctrl+z':'undo'}
         self.labelEntryList = []
         self.shortcutLabelList = []
-        # default GUI display parameter
+        # 默认 GUI 显示参数
         if len(self.pressCommand) > 20:
             self.textRow = len(self.pressCommand)
         else:
@@ -52,15 +56,14 @@ class Example(Frame):
         self.textColumn = 5
         self.tagScheme = "BMES"
         self.onlyNP = False  ## for exporting sequence 
-        self.keepRecommend = True
-        
+        self.keepRecommend = True        
 
         '''
-        self.seged: for exporting sequence, if True then split words with space, else split character without space
-        for example, if your data is segmentated Chinese (or English) with words seperated by a space, you need to set this flag as true
-        if your data is Chinese without segmentation, you need to set this flag as False
+		self.seged: 用于导出序列，
+		True 用于有词语之间有空格间隔，如英文或已分词的中文，
+		False 用于按字分隔，如没有分词的中文
         '''
-        self.seged = False  ## False for non-segmentated Chinese, True for English or Segmented Chinese
+        self.seged = False  ## False 用于没有分词的中文，True 用于英文或已分词的中文
         self.configFile = "config"
         self.entityRe = r'\[\@.*?\#.*?\*\](?!\#)'
         self.insideNestEntityRe = r'\[\@\[\@(?!\[\@).*?\#.*?\*\]\#'
@@ -68,7 +71,7 @@ class Example(Frame):
         self.goldAndrecomRe = r'\[\@.*?\#.*?\*\](?!\#)'
         if self.keepRecommend:
             self.goldAndrecomRe = r'\[[\@\$)].*?\#.*?\*\](?!\#)'
-        ## configure color
+        ## 配置颜色
         self.entityColor = "SkyBlue1"
         self.insideNestEntityColor = "light slate blue"
         self.recommendColor = 'lightgreen'
@@ -76,9 +79,8 @@ class Example(Frame):
         self.textFontStyle = "Times"
         self.initUI()
         
-        
-    def initUI(self):
-      
+    def initUI(self): 
+        """初始化 UI"""
         self.parent.title(self.Version)
         self.pack(fill=BOTH, expand=True)
         
@@ -90,7 +92,7 @@ class Example(Frame):
         for idx in range(0,16):
             self.rowconfigure(idx, weight =1)
         
-        self.lbl = Label(self, text="File: no file is opened")
+        self.lbl = Label(self, text=u"文件：没有打开的文件")
         self.lbl.grid(sticky=W, pady=4, padx=5)
         self.fnt = tkFont.Font(family=self.textFontStyle,size=self.textRow,weight="bold",underline=0)
         self.text = Text(self, font=self.fnt, selectbackground=self.selectColor)
@@ -115,8 +117,7 @@ class Example(Frame):
         ubtn.grid(row=4, column=self.textColumn +1, pady=4)
 
         exportbtn = Button(self, text="Export", command=self.generateSequenceFile)
-        exportbtn.grid(row=5, column=self.textColumn + 1, pady=4)
-        
+        exportbtn.grid(row=5, column=self.textColumn + 1, pady=4)        
 
         cbtn = Button(self, text="Quit", command=self.quit)
         cbtn.grid(row=6, column=self.textColumn + 1, pady=4)
@@ -138,17 +139,13 @@ class Example(Frame):
         # a.pack(side='left')
         # b = Radiobutton(self.parent, text="NotRecommend",   width=12,  variable=recommend_value, value="N")
         # # b.grid(row =1 , column = 3)
-        # b.pack(side='left')
-       
+        # b.pack(side='left')       
 
-        lbl_entry = Label(self, text="Command:")
+        lbl_entry = Label(self, text=u"命令：")
         lbl_entry.grid(row = self.textRow +1,  sticky = E+W+S+N, pady=4,padx=4)
         self.entry = Entry(self)
         self.entry.grid(row = self.textRow +1, columnspan=self.textColumn + 1, rowspan = 1, sticky = E+W+S+N, pady=4, padx=80)
         self.entry.bind('<Return>', self.returnEnter)
-
-        
-
         
         # for press_key in self.pressCommand.keys():
         for idx in range(0, len(self.allKey)):
@@ -164,9 +161,8 @@ class Example(Frame):
                 altPlusKey = "<Command-Key-" + press_key + ">"
                 self.text.bind(altPlusKey, self.keepCurrent)
 
-
         self.text.bind('<Control-Key-z>', self.backToHistory)
-        ## disable the default  copy behaivour when right click. For MacOS, right click is button 2, other systems are button3
+        ## disable the default copy behaivour when right click. For MacOS, right click is button 2, other systems are button3
         self.text.bind('<Button-2>', self.rightClick)
         self.text.bind('<Button-3>', self.rightClick)
 
@@ -176,50 +172,47 @@ class Example(Frame):
         self.setMapShow()
 
         self.enter = Button(self, text="Enter", command=self.returnButton)
-        self.enter.grid(row=self.textRow +1, column=self.textColumn +1) 
-    
+        self.enter.grid(row=self.textRow +1, column=self.textColumn +1)
 
-    ## cursor index show with the left click
     def singleLeftClick(self, event):
+        """单击鼠标左键"""
         if self.debug:
-            print "Action Track: singleLeftClick"
+            print(u"动作追踪：单击鼠标左键")
         cursor_index = self.text.index(INSERT) 
         row_column = cursor_index.split('.')
         cursor_text = ("row: %s\ncol: %s" % (row_column[0], row_column[-1]))
         self.cursorIndex.config(text=cursor_text)
-
     
-    ## TODO: select entity by double left click
     def doubleLeftClick(self, event):
+        """双击鼠标左键，选择实体 (TODO 还没有实现)"""
         if self.debug:
-            print "Action Track: doubleLeftClick"
+            print(u"动作追踪：双击鼠标左键")
         pass
         # cursor_index = self.text.index(INSERT)
         # start_index = ("%s - %sc" % (cursor_index, 5))
         # end_index = ("%s + %sc" % (cursor_index, 5))
         # self.text.tag_add('SEL', '1.0',"end-1c")
-        
-        
 
-    ## Disable right click default copy selection behaviour
+    ## Disable right click default copy selection behavior
     def rightClick(self, event):
         if self.debug:
-            print "Action Track: rightClick"
+            print(u"动作追踪：点击右键")
         try:
             firstSelection_index = self.text.index(SEL_FIRST)
             cursor_index = self.text.index(SEL_LAST)
-            content = self.text.get('1.0',"end-1c").encode('utf-8')
+            content = self.text.get('1.0',"end-1c")
             self.writeFile(self.fileName, content, cursor_index)
         except TclError:
             pass
 
     def setInRecommendModel(self):
+        """开启推荐标注模式"""
         self.recommendFlag = True
         self.RecommendModelFlag.config(text = str(self.recommendFlag))
         tkMessageBox.showinfo("Recommend Model", "Recommend Model has been activated!")
 
-
     def setInNotRecommendModel(self):
+        """关闭推荐标注模式"""
         self.recommendFlag = False 
         self.RecommendModelFlag.config(text = str(self.recommendFlag))
         content = self.getText()
@@ -227,8 +220,8 @@ class Example(Frame):
         self.writeFile(self.fileName, content, '1.0')
         tkMessageBox.showinfo("Recommend Model", "Recommend Model has been deactivated!")
 
-
     def onOpen(self):
+        """打开文件"""
         ftypes = [('all files', '.*'), ('text files', '.txt'), ('ann files', '.ann')]
         dlg = tkFileDialog.Open(self, filetypes = ftypes)
         # file_opt = options =  {}
@@ -247,12 +240,14 @@ class Example(Frame):
             self.setCursorLabel(self.text.index(INSERT))
 
     def readFile(self, filename):
-        f = open(filename, "rU")
-        text = f.read()
-        self.fileName = filename
-        return text
+        """读文件"""
+        with codecs.open(filename, "rU", encoding='utf-8') as f:
+            text = f.read()
+            self.fileName = filename
+            return text
 
     def setFont(self, value):
+        """设置字体"""
         _family=self.textFontStyle
         _size = value
         _weight="bold"
@@ -265,14 +260,14 @@ class Example(Frame):
 
     def setCursorLabel(self, cursor_index):
         if self.debug:
-            print "Action Track: setCursorLabel"
+            print("Action Track: setCursorLabel")
         row_column = cursor_index.split('.')
         cursor_text = ("row: %s\ncol: %s" % (row_column[0], row_column[-1]))
         self.cursorIndex.config(text=cursor_text)
 
     def returnButton(self):
         if self.debug:
-            print "Action Track: returnButton"
+            print("Action Track: returnButton")
         self.pushToHistory()
         # self.returnEnter(event)
         content = self.entry.get()
@@ -280,67 +275,62 @@ class Example(Frame):
         self.executeEntryCommand(content)
         return content
 
-
     def returnEnter(self,event):
         if self.debug:
-            print "Action Track: returnEnter"
+            print("Action Track: returnEnter")
         self.pushToHistory()
         content = self.entry.get()
         self.clearCommand()
         self.executeEntryCommand(content)
         return content
 
-
     def textReturnEnter(self,event):
         press_key = event.char
         if self.debug:
-            print "Action Track: textReturnEnter"
+            print("Action Track: textReturnEnter")
         self.pushToHistory()
-        print "event: ", press_key
+        print("event: ", press_key)
         # content = self.text.get()
         self.clearCommand()
         self.executeCursorCommand(press_key.lower())
         # self.deleteTextInput()
         return press_key
 
-
     def backToHistory(self,event):
         if self.debug:
-            print "Action Track: backToHistory"
+            print("Action Track: backToHistory")
         if len(self.history) > 0:
             historyCondition = self.history.pop()
-            # print "history condition: ", historyCondition
+            # print("history condition: ", historyCondition)
             historyContent = historyCondition[0]
-            # print "history content: ", historyContent
+            # print("history content: ", historyContent)
             cursorIndex = historyCondition[1]
-            # print "get history cursor: ", cursorIndex
+            # print("get history cursor: ", cursorIndex)
             self.writeFile(self.fileName, historyContent, cursorIndex)
         else:
-            print "History is empty!"
+            print(u"历史为空！")
         self.text.insert(INSERT, 'p')   # add a word as pad for key release delete
 
     def keepCurrent(self, event):
         if self.debug:
-            print "Action Track: keepCurrent"
+            print("Action Track: keepCurrent")
         print("keep current, insert:%s"%(INSERT))
-        print "before:", self.text.index(INSERT)
+        print("before:", self.text.index(INSERT))
         self.text.insert(INSERT, 'p')
-        print "after:", self.text.index(INSERT)
+        print("after:", self.text.index(INSERT))
 
     def clearCommand(self):
         if self.debug:
-            print "Action Track: clearCommand"
+            print("Action Track: clearCommand")
         self.entry.delete(0, 'end')
-
 
     def getText(self):
         textContent = self.text.get("1.0","end-1c")
-        textContent = textContent.encode('utf-8')
         return textContent
 
     def executeCursorCommand(self,command):
         if self.debug:
-            print "Action Track: executeCursorCommand"
+            print("Action Track: executeCursorCommand")
         content = self.getText()
         print("Command:"+command)
         try:
@@ -360,13 +350,12 @@ class Example(Frame):
             afterEntity_content = followHalf_content[len(selected_string):]
 
             if command == "q":
-                print 'q: remove entity label'
+                print('q: remove entity label')
             else:
                 if len(selected_string) > 0:
                     entity_content, cursor_index = self.replaceString(selected_string, selected_string, command, cursor_index)
             aboveHalf_content += entity_content
-            content = self.addRecommendContent(aboveHalf_content, afterEntity_content, self.recommendFlag)      
-            content = content.encode('utf-8')
+            content = self.addRecommendContent(aboveHalf_content, afterEntity_content, self.recommendFlag)
             self.writeFile(self.fileName, content, cursor_index)
         except TclError:
             ## not select text
@@ -404,9 +393,9 @@ class Example(Frame):
                 entity_content = selected_string
                 cursor_index = line_id + '.'+ str(int(matched_span[1])-(len(new_string_list[1])+4))
                 if command == "q":
-                    print 'q: remove entity label'
+                    print('q: remove entity label')
                 elif command == 'y':
-                    print "y: comfirm recommend label"
+                    print("y: comfirm recommend label")
                     old_key = self.pressCommand.keys()[self.pressCommand.values().index(old_entity_type)]
                     entity_content, cursor_index = self.replaceString(selected_string, selected_string, old_key, cursor_index)
                 else:
@@ -427,13 +416,11 @@ class Example(Frame):
                 followHalf_content = line_after_entity 
                 
             content = self.addRecommendContent(aboveHalf_content, followHalf_content, self.recommendFlag)
-            content = content.encode('utf-8')
             self.writeFile(self.fileName, content, cursor_index)
-
 
     def executeEntryCommand(self,command):
         if self.debug:
-            print "Action Track: executeEntryCommand"
+            print("Action Track: executeEntryCommand")
         if len(command) == 0:
             currentCursor = self.text.index(INSERT)
             newCurrentCursor = str(int(currentCursor.split('.')[0])+1) + ".0"
@@ -449,82 +436,76 @@ class Example(Frame):
                     content = self.getText()
                     cursor_index = self.text.index(INSERT)
                     newcursor_index = cursor_index.split('.')[0]+"."+str(int(cursor_index.split('.')[1])+select_num)
-                    # print "new cursor position: ", select_num, " with ", newcursor_index, "with ", newcursor_index
-                    selected_string = self.text.get(cursor_index, newcursor_index).encode('utf-8')
-                    aboveHalf_content = self.text.get('1.0',cursor_index).encode('utf-8')
-                    followHalf_content = self.text.get(cursor_index, "end-1c").encode('utf-8')
+                    # print("new cursor position: ", select_num, " with ", newcursor_index, "with ", newcursor_index)
+                    selected_string = self.text.get(cursor_index, newcursor_index)
+                    aboveHalf_content = self.text.get('1.0',cursor_index)
+                    followHalf_content = self.text.get(cursor_index, "end-1c")
                     if command in self.pressCommand:
                         if len(selected_string) > 0:
-                            # print "insert index: ", self.text.index(INSERT) 
+                            # print("insert index: ", self.text.index(INSERT))
                             followHalf_content, newcursor_index = self.replaceString(followHalf_content, selected_string, command, newcursor_index)
                             content = self.addRecommendContent(aboveHalf_content, followHalf_content, self.recommendFlag)
                             # content = aboveHalf_content + followHalf_content
-                    self.writeFile(self.fileName, content, newcursor_index)
-            
+                    self.writeFile(self.fileName, content, newcursor_index)            
 
     def deleteTextInput(self,event):
         if self.debug:
-            print "Action Track: deleteTextInput"
+            print("Action Track: deleteTextInput")
         get_insert = self.text.index(INSERT)
-        print "delete insert:",get_insert
+        print("delete insert:",get_insert)
         insert_list = get_insert.split('.')
         last_insert = insert_list[0] + "." + str(int(insert_list[1])-1)
-        get_input = self.text.get(last_insert, get_insert).encode('utf-8')
-        # print "get_input: ", get_input
-        aboveHalf_content = self.text.get('1.0',last_insert).encode('utf-8')
-        followHalf_content = self.text.get(last_insert, "end-1c").encode('utf-8')
+        get_input = self.text.get(last_insert, get_insert)
+        # print("get_input: ", get_input)
+        aboveHalf_content = self.text.get('1.0',last_insert)
+        followHalf_content = self.text.get(last_insert, "end-1c")
         if len(get_input) > 0: 
             followHalf_content = followHalf_content.replace(get_input, '', 1)
         content = aboveHalf_content + followHalf_content
         self.writeFile(self.fileName, content, last_insert)
 
-
-
     def replaceString(self, content, string, replaceType, cursor_index):
+        """替换字符串"""
         if replaceType in self.pressCommand:
             new_string = "[@" + string + "#" + self.pressCommand[replaceType] + "*]" 
             newcursor_index = cursor_index.split('.')[0]+"."+str(int(cursor_index.split('.')[1])+len(self.pressCommand[replaceType])+5)
         else:
-            print "Invaild command!"  
-            print "cursor index: ", self.text.index(INSERT)  
+            print("Invaild command!")
+            print("cursor index: ", self.text.index(INSERT))
             return content, cursor_index
         content = content.replace(string, new_string, 1)
         return content, newcursor_index
 
-
     def writeFile(self, fileName, content, newcursor_index):
+        """写文件"""
         if self.debug:
-                print "Action track: writeFile"
+                print("Action track: writeFile")
 
         if len(fileName) > 0:
-            if ".ann" in fileName:
-                new_name = fileName
-                ann_file = open(new_name, 'w')
+            new_name = fileName + '.ann' if '.ann' not in fileName else fileName
+            with codecs.open(new_name, 'w', encoding='utf-8') as ann_file:
                 ann_file.write(content)
-                ann_file.close()
-            else:
-                new_name = fileName+'.ann'
-                ann_file = open(new_name, 'w')
-                ann_file.write(content)
-                ann_file.close()   
-            # print "Writed to new file: ", new_name 
+            
+            # print("Writed to new file: ", new_name)
             self.autoLoadNewFile(new_name, newcursor_index)
             # self.generateSequenceFile()
         else:
-            print "Don't write to empty file!"        
+            print("Don't write to empty file!")
 
     def addRecommendContent(self, train_data, decode_data, recommendMode):
+        """添加推荐的内容"""
         if not recommendMode:
             content = train_data + decode_data
         else:
             if self.debug:
-                print "Action Track: addRecommendContent, start Recommend entity"
+                print("Action Track: addRecommendContent, start Recommend entity")
             content = maximum_matching(train_data, decode_data)
         return content
 
     def autoLoadNewFile(self, fileName, newcursor_index):
+        """自动加载新文件"""
         if self.debug:
-            print "Action Track: autoLoadNewFile"
+            print("Action Track: autoLoadNewFile")
         if len(fileName) > 0:
             self.text.delete("1.0",END)
             text = self.readFile(fileName)
@@ -533,12 +514,11 @@ class Example(Frame):
             self.text.mark_set(INSERT, newcursor_index)
             self.text.see(newcursor_index)
             self.setCursorLabel(newcursor_index)
-            self.setColorDisplay()
-            
+            self.setColorDisplay()            
 
     def setColorDisplay(self):
         if self.debug:
-            print "Action Track: setColorDisplay"
+            print("Action Track: setColorDisplay")
         self.text.config(insertbackground='red', insertwidth=4, font=self.fnt)
 
         countVar = StringVar()
@@ -589,8 +569,7 @@ class Example(Frame):
             first_pos = recommend_pos
             # second_pos = "%s+%sc" % (recommend_pos, str(1))
             lastsecond_pos = "%s+%sc" % (recommend_pos, str(int(countVar.get())))
-            self.text.tag_add("recommend", first_pos, lastsecond_pos)
-            
+            self.text.tag_add("recommend", first_pos, lastsecond_pos)            
         
         ## color the most inside span for nested span, scan from begin to end again  
         if self.colorAllChunk:
@@ -614,30 +593,30 @@ class Example(Frame):
     
     def pushToHistory(self):
         if self.debug:
-            print "Action Track: pushToHistory"
+            print("Action Track: pushToHistory")
         currentList = []
         content = self.getText()
         cursorPosition = self.text.index(INSERT)
-        # print "push to history cursor: ", cursorPosition
+        # print("push to history cursor: ", cursorPosition)
         currentList.append(content)
         currentList.append(cursorPosition)
         self.history.append(currentList)
 
     def pushToHistoryEvent(self,event):
         if self.debug:
-            print "Action Track: pushToHistoryEvent"
+            print("Action Track: pushToHistoryEvent")
         currentList = []
         content = self.getText()
         cursorPosition = self.text.index(INSERT)
-        # print "push to history cursor: ", cursorPosition
+        # print("push to history cursor: ", cursorPosition)
         currentList.append(content)
         currentList.append(cursorPosition)
         self.history.append(currentList)
 
-    ## update shortcut map
     def renewPressCommand(self):
+	    ## 更新快捷方式映射表
         if self.debug:
-            print "Action Track: renewPressCommand"
+            print("Action Track: renewPressCommand")
         seq = 0
         new_dict = {}
         listLength = len(self.labelEntryList)
@@ -656,24 +635,23 @@ class Example(Frame):
         with open(self.configFile, 'wb') as fp:
             pickle.dump(self.pressCommand, fp)
         self.setMapShow()
-        tkMessageBox.showinfo("Remap Notification", "Shortcut map has been updated!\n\nConfigure file has been saved in File:" + self.configFile)
+        tkMessageBox.showinfo("Remap Notification", u"快捷方式已更新！\n\n配置文件保存在：" + self.configFile)
 
-
-    ## show shortcut map
     def setMapShow(self):
+        """显示快捷方式映射表"""
         if os.path.isfile(self.configFile):
             with open (self.configFile, 'rb') as fp:
                 self.pressCommand = pickle.load(fp)
         hight = len(self.pressCommand)
         width = 2
         row = 0
-        mapLabel = Label(self, text ="Shortcuts map Labels", foreground="blue", font=(self.textFontStyle, 14, "bold"))
+        mapLabel = Label(self, text =u"快捷键", foreground="blue", font=(self.textFontStyle, 14, "bold"))
         mapLabel.grid(row=0, column = self.textColumn +2,columnspan=2, rowspan = 1, padx = 10)
         self.labelEntryList = []
         self.shortcutLabelList = []
         for key in sorted(self.pressCommand):
             row += 1
-            # print "key: ", key, "  command: ", self.pressCommand[key]
+            # print("key: ", key, "  command: ", self.pressCommand[key])
             symbolLabel = Label(self, text =key.upper() + ": ", foreground="blue", font=(self.textFontStyle, 14, "bold"))
             symbolLabel.grid(row=row, column = self.textColumn +2,columnspan=1, rowspan = 1, padx = 3)
             self.shortcutLabelList.append(symbolLabel)
@@ -682,50 +660,51 @@ class Example(Frame):
             labelEntry.insert(0, self.pressCommand[key])
             labelEntry.grid(row=row, column = self.textColumn +3, columnspan=1, rowspan = 1)
             self.labelEntryList.append(labelEntry)
-            # print "row: ", row
-
+            # print("row: ", row)
 
     def getCursorIndex(self):
         return self.text.index(INSERT)
 
-
     def generateSequenceFile(self):
+        """生成序列标注文件"""
         if (".ann" not in self.fileName) and (".txt" not in self.fileName): 
-            out_error = "Export only works on filename ended in .ann or .txt!\nPlease rename file."
-            print out_error
-            tkMessageBox.showerror("Export error!", out_error)
-
+            out_error = u"导出功能只能用于 .ann 或 .txt 文件。"
+            print(out_error)
+            tkMessageBox.showerror(u"导出错误!", out_error)
             return -1
-        fileLines = open(self.fileName, 'rU').readlines()
+			
+        with codecs.open(self.fileName, 'rU', encoding='utf-8') as f:
+            fileLines = f.readlines()
+        
         lineNum = len(fileLines)
         new_filename = self.fileName.split('.ann')[0]+ '.anns'
-        seqFile = open(new_filename, 'w')
-        for line in fileLines:
-            if len(line) <= 2:
-                seqFile.write('\n')
-                continue
-            else:
-                if not self.keepRecommend:
-                    line = removeRecommendContent(line, self.recommendRe)
-                wordTagPairs = getWordTagPairs(line, self.seged, self.tagScheme, self.onlyNP, self.goldAndrecomRe)
-                for wordTag in wordTagPairs:
-                    seqFile.write(wordTag)
-                ## use null line to seperate sentences
-                seqFile.write('\n')
-        seqFile.close()
-        print "Exported file into sequence style in file: ",new_filename
-        print "Line number:",lineNum
-        showMessage =  "Exported file successfully!\n\n"   
-        showMessage += "Tag scheme: " +self.tagScheme + "\n\n"
-        showMessage += "Keep Recom: " +str(self.keepRecommend) + "\n\n"
-        showMessage += "Text Seged: " +str(self.seged) + "\n\n"
-        showMessage += "Line Number: " + str(lineNum)+ "\n\n"
-        showMessage += "Saved to File: " + new_filename
-        tkMessageBox.showinfo("Export Message", showMessage)
+        with codecs.open(new_filename, 'w', encoding='utf-8') as seqFile: 
+            for line in fileLines:
+                if len(line) <= 2:
+                    seqFile.write('\n')
+                    continue
+                else:
+                    if not self.keepRecommend:
+                        line = removeRecommendContent(line, self.recommendRe)
+                    wordTagPairs = getWordTagPairs(line, self.seged, self.tagScheme, self.onlyNP, self.goldAndrecomRe)
+                    for wordTag in wordTagPairs:
+                        seqFile.write(wordTag)
+                    ## use null line to seperate sentences
+                    seqFile.write('\n')
 
+        print(u"导出序列标注文件：", new_filename)
+        print(u"行数：", lineNum)
+        showMessage =  u"导出文件成功！\n\n"   
+        showMessage += u"格式：" + self.tagScheme + "\n\n"
+        showMessage += u"推荐：" + str(self.keepRecommend) + "\n\n"
+        showMessage += u"分词：" + str(self.seged) + "\n\n"
+        showMessage += u"行数：" + str(lineNum) + "\n\n"
+        showMessage += u"文件：" + new_filename
+        tkMessageBox.showinfo(u"导出信息", showMessage)
 
+		
 def getWordTagPairs(tagedSentence, seged=True, tagScheme="BMES", onlyNP=False, entityRe=r'\[\@.*?\#.*?\*\]'):
-    newSent = tagedSentence.strip('\n').decode('utf-8')
+    newSent = tagedSentence.strip('\n')
     filterList = re.findall(entityRe, newSent)
     newSentLength = len(newSent)
     chunk_list = []
@@ -738,11 +717,11 @@ def getWordTagPairs(tagedSentence, seged=True, tagScheme="BMES", onlyNP=False, e
         singleChunkList.append(len(newSent))
         singleChunkList.append(False)
         chunk_list.append(singleChunkList)
-        # print singleChunkList
+        # print(singleChunkList)
         singleChunkList = []
     else:
         for pattern in filterList:
-            # print pattern
+            # print(pattern)
             singleChunkList = []
             start_pos = end_pos + newSent[end_pos:].find(pattern)
             end_pos = start_pos + len(pattern)
@@ -765,28 +744,28 @@ def getWordTagPairs(tagedSentence, seged=True, tagScheme="BMES", onlyNP=False, e
             if chunk_list[idx][1] == chunk_list[idx-1][2]:
                 full_list.append(chunk_list[idx])
             elif chunk_list[idx][1] < chunk_list[idx-1][2]:
-                print "ERROR: found pattern has overlap!", chunk_list[idx][1], ' with ', chunk_list[idx-1][2]
+                print("ERROR: found pattern has overlap!", chunk_list[idx][1], ' with ', chunk_list[idx-1][2])
             else:
                 full_list.append([newSent[chunk_list[idx-1][2]:chunk_list[idx][1]], chunk_list[idx-1][2], chunk_list[idx][1], False])
                 full_list.append(chunk_list[idx])
 
         if idx == len(chunk_list) - 1 :
             if chunk_list[idx][2] > newSentLength:
-                print "ERROR: found pattern position larger than sentence length!"
+                print("ERROR: found pattern position larger than sentence length!")
             elif chunk_list[idx][2] < newSentLength:
                 full_list.append([newSent[chunk_list[idx][2]:newSentLength], chunk_list[idx][2], newSentLength, False])
             else:
                 continue
     return turnFullListToOutputPair(full_list, seged, tagScheme, onlyNP)
 
-
+	
 def turnFullListToOutputPair(fullList, seged=True, tagScheme="BMES", onlyNP=False):
     pairList = []
     for eachList in fullList:
         if eachList[3]:
             contLabelList = eachList[0].strip('[@$]').rsplit('#', 1)
             if len(contLabelList) != 2:
-                print "Error: sentence format error!"
+                print("Error: sentence format error!")
             label = contLabelList[1].strip('*')
             if seged:
                 contLabelList[0] = contLabelList[0].split()
@@ -803,17 +782,18 @@ def turnFullListToOutputPair(fullList, seged=True, tagScheme="BMES", onlyNP=Fals
                 if basicContent == ' ': 
                     continue
                 pair = basicContent + ' ' + 'O\n'
-                pairList.append(pair.encode('utf-8'))
+                #pairList.append(pair)
+                pairList.append(pair)
     return pairList
 
-
+	
 def outputWithTagScheme(input_list, label, tagScheme="BMES"):
     output_list = []
     list_length = len(input_list)
     if tagScheme=="BMES":
         if list_length ==1:
             pair = input_list[0]+ ' ' + 'S-' + label + '\n'
-            output_list.append(pair.encode('utf-8'))
+            output_list.append(pair)
         else:
             for idx in range(list_length):
                 if idx == 0:
@@ -822,18 +802,19 @@ def outputWithTagScheme(input_list, label, tagScheme="BMES"):
                     pair = input_list[idx]+ ' ' + 'E-' + label + '\n'
                 else:
                     pair = input_list[idx]+ ' ' + 'M-' + label + '\n'
-                output_list.append(pair.encode('utf-8'))
+                output_list.append(pair)
     else:
         for idx in range(list_length):
             if idx == 0:
                 pair = input_list[idx]+ ' ' + 'B-' + label + '\n'
             else:
                 pair = input_list[idx]+ ' ' + 'I-' + label + '\n'
-            output_list.append(pair.encode('utf-8'))
+            output_list.append(pair)
     return output_list
 
-
+	
 def removeRecommendContent(content, recommendRe = r'\[\$.*?\#.*?\*\](?!\#)'):
+    """删除推荐标注的内容"""
     output_content = ""
     last_match_end = 0
     for match in re.finditer(recommendRe, content):
@@ -844,11 +825,7 @@ def removeRecommendContent(content, recommendRe = r'\[\$.*?\#.*?\*\](?!\#)'):
     output_content += content[last_match_end:]
     return output_content
 
-
-
-
-
-
+	
 def decompositCommand(command_string):
     command_list = []
     each_command = []
@@ -862,25 +839,19 @@ def decompositCommand(command_string):
             command_list.append(each_command)
             each_command = []
             num_select =''
-    # print command_list
+    # print(command_list)
     return command_list
-
-
+	
 
 def main():
-    print("SUTDAnnotator launched!")
-    print(("OS:%s")%(platform.system()))
+    print(u"启动 YEDDA 标注工具！")
+    print((u"操作系统：%s")%(platform.system()))
     root = Tk()
     root.geometry("1300x700+200+200")
     app = Example(root)
     app.setFont(17)
-    root.mainloop()  
+    root.mainloop()
 
 
 if __name__ == '__main__':
     main()
-
-
-
-
-

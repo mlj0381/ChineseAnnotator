@@ -6,37 +6,36 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-from Tkinter import *
-from ttk import *#Frame, Button, Label, Style, Scrollbar
-import tkFileDialog
-import tkFont
+from tkinter import *
+from tkinter.ttk import * # Frame, Button, Label, Style, Scrollbar
+from tkinter import filedialog as tkFileDialog
+from tkinter import font as tkFont
+from tkinter import messagebox as tkMessageBox
+
 import re
 from collections import deque
 import pickle
 import os.path
 import platform
+
 from utils.recommend import *
 from utils.metric4ann import *
 from utils.compareAnn import *
-import tkMessageBox
 
 
 class Example(Frame):
     def __init__(self, parent):
         Frame.__init__(self, parent)
-        self.Version = "YEDDA-V1.0 Administrator"
+        self.Version = u"YEDDA-V1.0 管理员"
         self.OS = platform.system().lower()
         self.parent = parent
         self.fileName = ""
-        # default GUI display parameter
-        
+        # 初始化 GUI 显示参数        
         self.textColumn = 3
-
-        self.initUI()
-        
+        self.initUI()        
         
     def initUI(self):
-      
+        ## 初始化 UI	
         self.parent.title(self.Version)
         self.pack(fill=BOTH, expand=True)
         
@@ -53,16 +52,14 @@ class Example(Frame):
 
         width_size = 30
 
-        abtn = Button(self, text="Multi-Annotator Analysis", command=self.multiFiles, width = width_size)
+        abtn = Button(self, text=u"多标注分析", command=self.multiFiles, width = width_size)
         abtn.grid(row=0, column=1)
 
-        recButton = Button(self, text="Pairwise Comparison", command=self.compareTwoFiles,  width = width_size)
+        recButton = Button(self, text=u"配对比较", command=self.compareTwoFiles,  width = width_size)
         recButton.grid(row=1, column=1)
-        
 
-        cbtn = Button(self, text="Quit", command=self.quit, width = width_size)
+        cbtn = Button(self, text=u"退出", command=self.quit, width = width_size)
         cbtn.grid(row=2, column=1)
-
 
     def ChildWindow(self, input_list, result_matrix):
         file_list = []
@@ -74,14 +71,13 @@ class Example(Frame):
             else:
                 file_list.append(dir_name)
 
-
-        #Create menu
+        # 创建菜单
         self.popup = Menu(self.parent, tearoff=0)
         self.popup.add_command(label="Next", command=self.selection)
         self.popup.add_separator()
 
         def do_popup(event):
-            # display the popup menu
+            # 显示弹出菜单
             try:
                 self.popup.selection = self.tree.set(self.tree.identify_row(event.y))
                 self.popup.post(event.x_root, event.y_root)
@@ -89,7 +85,7 @@ class Example(Frame):
                 # make sure to release the grab (Tk 8.0a1 only)
                 self.popup.grab_release()
 
-        #Create Treeview
+        # 创建树状视图
         win2 = Toplevel(self.parent)
         new_element_header=file_list
         treeScroll = Scrollbar(win2)
@@ -116,53 +112,45 @@ class Example(Frame):
         self.tree.bind("<Button-3>", do_popup)
 
         win2.minsize(30,30)
+		
     def selection(self):
-        print self.popup.selection
-        
+        print(self.popup.selection)
 
     def multiFiles(self):
         ftypes = [('ann files', '.ann')]
         filez = tkFileDialog.askopenfilenames(parent=self.parent, filetypes = ftypes, title='Choose a file')
         if len(filez) < 2:
-            tkMessageBox.showinfo("Monitor Error", "Selected less than two files!\n\nPlease select at least two files!")
+            tkMessageBox.showinfo(u"监视错误", u"不足 2 个文件！\n\n请至少选择 2 个文件！")
         else:
             result_matrix =  generate_report_from_list(filez)
             self.ChildWindow(filez, result_matrix)
 
-
     def compareTwoFiles(self):
         ftypes = [('ann files', '.ann')]
-        filez = tkFileDialog.askopenfilenames(parent=self.parent, filetypes = ftypes, title='Choose a file')
+        filez = tkFileDialog.askopenfilenames(parent=self.parent, filetypes = ftypes, title=u'选择文件')
         if len(filez) != 2:
-            tkMessageBox.showinfo("Compare Error", "Please select exactly two files!")
+            tkMessageBox.showinfo(u"比较错误", u"请选择 2 个文件！")
         else:
             f = tkFileDialog.asksaveasfile(mode='w', defaultextension=".tex")
             write_result = compareBoundary(filez[0],filez[1],f)
             if write_result:
-                tkMessageBox.showinfo("Latex Generate", "Latex file generated successfully!\n\nSaved to "+ f.name)
+                tkMessageBox.showinfo(u"生成 Latex", u"成功生成 Latex 文件！\n\保存到 "+ f.name)
                 # import os
                 # os.system("pdflatex "+ f.name)
             else:
-                tkMessageBox.showinfo("Latex Error", "Latex generated Error, two files don't have same sentence number!")
+                tkMessageBox.showinfo(u"Latex 错误", u"生成 Latex 错误：2 个文件的句子数不相等！")
             f.close()
-            
-
 
 
 def main():
-    print("SUTDAnnotator launched!")
-    print(("OS:%s")%(platform.system()))
+    print(u"启动 YEDDA 管理员程序！")
+    print((u"操作系统：%s")%(platform.system()))
     root = Tk()
     root.geometry("400x100")
     app = Example(root)
     
-    root.mainloop()  
-
+    root.mainloop()
+	
 
 if __name__ == '__main__':
     main()
-
-
-
-
-

@@ -6,13 +6,14 @@
 
 import re
 
+
 def maximum_matching(train_text, decode_text, entityRe = r'\[\@.*?\#.*?\*\](?!\#)', recommendRe = r'\[\$.*?\#.*?\*\](?!\#)'):
-	# print "Training data:"
-	# print train_text
-	# print "Decode data:"
-	# print decode_text
-	# train_text = train_text.decode('utf-8')
-	# decode_text = decode_text.decode('utf-8')
+	# print("Training data:")
+	# print(train_text)
+	# print("Decode data:")
+	# print(decode_text)
+	# train_text = train_text
+	# decode_text = decode_text
 	extracted_dict = {}
 	max_length = 0
 	for match in re.finditer(entityRe, train_text):
@@ -23,8 +24,7 @@ def maximum_matching(train_text, decode_text, entityRe = r'\[\@.*?\#.*?\*\](?!\#
 			max_length = len(entity)
 		
 		extracted_dict[entity] = entity_type
-	# print "dict:", extracted_dict
-
+	# print("dict:", extracted_dict)
 
 	if len(extracted_dict) == 0:
 		return train_text + decode_text
@@ -44,8 +44,6 @@ def maximum_matching(train_text, decode_text, entityRe = r'\[\@.*?\#.*?\*\](?!\#
 			near_sentences += new_string
 	decode_text = near_sentences
 
-
-
 	### forward maximum match algorithm with following conditions:
 	### 1. for previous recommend entities, remove them and recommend again
 	### 2. for recognized entities, ignored them (forward process ends at the begining of recognized entity)
@@ -60,7 +58,7 @@ def maximum_matching(train_text, decode_text, entityRe = r'\[\@.*?\#.*?\*\](?!\#
 		decode_no_recommend += entity
 		last_entity_end = match.span()[1]
 	decode_no_recommend += decode_text[last_entity_end:]
-	# print decode_no_recommend
+	# print(decode_no_recommend)
 	## ignored annotated entities but record them position (in entity_recognized_list)
 	decode_origin = ""
 	entity_recognized_list = []
@@ -76,8 +74,8 @@ def maximum_matching(train_text, decode_text, entityRe = r'\[\@.*?\#.*?\*\](?!\#
 	decode_origin += decode_no_recommend[last_entity_end:]
 	entity_recognized_list += [0]*(len(decode_no_recommend)-last_entity_end)
 	assert(len(decode_origin) == len(entity_recognized_list))
-	# print decode_origin
-	# print entity_recognized_list
+	# print(decode_origin)
+	# print(entity_recognized_list)
 
 	## forward maximum matching (FMM)
 	origin_length = len(decode_origin)
@@ -85,7 +83,6 @@ def maximum_matching(train_text, decode_text, entityRe = r'\[\@.*?\#.*?\*\](?!\#
 	FMM_end = (FMM_start + max_length) if (FMM_start + max_length) < origin_length-1 else origin_length-1
 	entity_recommend_list = []
 	while FMM_start < origin_length:
-
 		if FMM_end == FMM_start:
 			entity_recommend_list += [0]
 			FMM_start += 1
@@ -106,10 +103,11 @@ def maximum_matching(train_text, decode_text, entityRe = r'\[\@.*?\#.*?\*\](?!\#
 				FMM_end = (FMM_start + max_length) if (FMM_start + max_length) < origin_length-1 else origin_length-1
 			else:
 				FMM_end -= 1
-	# print entity_recommend_list
+	# print(entity_recommend_list)
 	assert(len(entity_recommend_list)== len(entity_recognized_list))
 	recommend_decode_text =  merge_text_with_entity(decode_origin, entity_recognized_list, entity_recommend_list)
 	return train_text + recommend_decode_text + far_sentences
+	
 
 def merge_text_with_entity(origin_text, recognized_list, recommend_list):
 	length = len(origin_text)
@@ -130,7 +128,7 @@ def merge_text_with_entity(origin_text, recognized_list, recommend_list):
 				entity_string = ""
 				entity_type = "Error"
 				entity_source = "Error"
-			# print new_string
+			# print(new_string)
 			new_string += origin_text[idx]
 
 		elif combine_list[idx].startswith("B-"):
@@ -145,7 +143,7 @@ def merge_text_with_entity(origin_text, recognized_list, recommend_list):
 		elif combine_list[idx].startswith("I-"):
 			entity_string += origin_text[idx]
 		else:
-			print "merge_text_with_entity error!"
+			print("merge_text_with_entity error!")
 	if entity_string:
 		new_string += "["+entity_source + entity_string + "#" + entity_type +"*]"
 		entity_string = ""
@@ -154,15 +152,7 @@ def merge_text_with_entity(origin_text, recognized_list, recommend_list):
 	return new_string
 
 
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
-	train_text = "于是我就给[@朱物华#Location*]校长、[@张钟俊#Location*]院长给他们写了一个报告!"
-	decode_text = "张钟俊院长，给他[$张钟俊#Location*][$张钟俊#Location*]..[@朱物华#Location*]."
-	print maximum_matching(train_text,decode_text)
+	train_text = u"于是我就给[@朱物华#Location*]校长、[@张钟俊#Location*]院长给他们写了一个报告!"
+	decode_text = u"张钟俊院长，给他[$张钟俊#Location*][$张钟俊#Location*]..[@朱物华#Location*]."
+	print(maximum_matching(train_text, decode_text))

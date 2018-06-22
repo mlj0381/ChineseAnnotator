@@ -3,11 +3,13 @@
 # @Date:   2017-04-25 11:07:00
 # @Last Modified by:   Jie Yang,     Contact: jieynlp@gmail.com
 # @Last Modified time: 2017-09-19 16:06:59
- 
 
 import re
 import sys
+import codecs
+
 import numpy as np
+
 
 def lines_to_label_list(input_lines):
     label_list = []
@@ -22,14 +24,15 @@ def lines_to_label_list(input_lines):
     return label_list
 
 
-## compare two files by f1-value, input file should be .ann file 
-## with format [@word1#entity-type*]word2 word3 ...
-## support nested entity (only use the largest span)
-## already remove segmentation space, i.e. character based entity extraction (to avoid segmentation mismatch problem on two files)
-def compare_files(gold_file, pred_file, up_ignore_layer = 0):
-    # print "Compare files..."
-    # print "Gold file:", gold_file
-    # print "Pred file:", pred_file
+def compare_files(gold_file, pred_file, up_ignore_layer = 0):	
+	## 比较 2 个文件，计算 F1 值。输入必须是 .ann 文件，
+	## 格式形如 [@word1#entity-type*]word2 word3 ...
+	## 支持嵌套实体 (只使用最长的实体)
+	## already remove segmentation space, i.e. character based entity extraction (to avoid segmentation mismatch problem on two files)
+	
+    # print("Compare files...")
+    # print("Gold file:", gold_file)
+    # print("Pred file:", pred_file)
     gold_entity, pred_entity, match_entity = get_matched_ner_from_file(gold_file, pred_file, up_ignore_layer)
 
     match_num = len(match_entity)
@@ -39,6 +42,7 @@ def compare_files(gold_file, pred_file, up_ignore_layer = 0):
 
 
 def get_final_score(gold_num, pred_num, match_num):
+    ## 计算最终的分数
     if pred_num == 0:
         precision = "Nan"
     else:
@@ -55,13 +59,16 @@ def get_final_score(gold_num, pred_num, match_num):
     # print(('Recall: %s/%s = %s')%(match_num, gold_num, recall))
     # print(('F1_value: %s')%(f_measure))
     return precision, recall, f_measure
-
-
-
+	
 
 def get_matched_ner_from_file(gold_file, pred_file, up_ignore_layer = 0):
-    gold_lines = open(gold_file, 'rU').readlines()
-    pred_lines = open(pred_file, 'rU').readlines()
+    ## 从文件中获取匹配的 NER
+    with codecs.open(gold_file, 'rU', encoding='utf-8') as f:
+        gold_lines = f.readlines()
+        
+    with codecs.open(pred_file, 'rU', encoding='utf-8') as f:
+        pred_lines = f.readlines()
+        
     sentence_num = len(gold_lines)
     assert(sentence_num == len(pred_lines))
     gold_entity = []
@@ -74,11 +81,11 @@ def get_matched_ner_from_file(gold_file, pred_file, up_ignore_layer = 0):
             continue
         if idx < start_line:
             continue
-        # print gold_lines[idx]
+        # print(gold_lines[idx])
         gold_filter_entity = filter_entity(get_ner_from_sentence(gold_lines[idx]), up_ignore_layer)
-        # print "gold:", gold_filter_entity
+        # print("gold:", gold_filter_entity)
         pred_filter_entity = filter_entity(get_ner_from_sentence(pred_lines[idx]), up_ignore_layer)
-        # print "pred:",pred_filter_entity
+        # print("pred:",pred_filter_entity)
         match = list(set(gold_filter_entity).intersection(set(pred_filter_entity)))
         gold_entity += gold_filter_entity
         pred_entity += pred_filter_entity
@@ -137,16 +144,12 @@ def compare_f_measure_by_type(gold_file, pred_file):
 
     return final_prf
 
-
-
-
-
-
 def get_ner_from_sentence(sentence):
+    ## 从句子中获取 NER
     ## remove segmentation space, avoid segmentation changes
-    sentence = sentence.strip().replace(' ', '').decode('utf-8')
+    sentence = sentence.strip().replace(' ', '')
     sentence_len = len(sentence)
-    # print sentence
+    # print(sentence)
     entity_start = []
     words = []
     last_char = ''
@@ -178,7 +181,7 @@ def get_ner_from_sentence(sentence):
                     entity_type_start = False
                 elif len(entity_start) == 1:
                     entity_info = '['+str(entity_start[0])+','+str(word_id-1) +']:'+entity_type.strip('*')
-                    entity_list.append(entity_info.encode('utf-8'))
+                    entity_list.append(entity_info)
                     entity_type = ''
                     entity_start = []
                     entity_type_start = False
@@ -192,13 +195,16 @@ def get_ner_from_sentence(sentence):
                 words.append(sentence[idx])
                 word_id += 1
         last_char = sentence[idx]
-    # print entity_list
+    # print(entity_list)
     return entity_list
-    # print entity_list
+    # print(entity_list)
     # for word in words:
-    #     print word, " ",
+    #     print(word, " ",)
+	
 
 def filter_entity(entity_list, up_ignore_layer = 0):
+    ## 过滤实体
+	
     ## ignore entity type when calculate
     ignore_type = {}
     # ignore_type = {'Fin-Concept'}
@@ -220,9 +226,9 @@ def filter_entity(entity_list, up_ignore_layer = 0):
             filtered_list.append(pair[0]+':'+entity_type)
     return filtered_list
 
-
-
+	
 def generate_f_value_report():
+    ## 生成 F 值报告
     file_list = [
                 # "exercise.chenhua.100.ann", 
                 "exercise.yangjie.100.ann", 
@@ -252,25 +258,27 @@ def generate_f_value_report():
             result_matrix_ignore_1_layer[idy][idx] = f1
             result_matrix_ignore_2_layer[idx][idy] = f2
             result_matrix_ignore_2_layer[idy][idx] = f2
-    print 
+    print() 
     ## show final results
-    print "FINAL REPORT:  all_catagory/ignore_sub_catogary/entity_chunk"
-    print "F1-value".rjust(10),
+    print("FINAL REPORT:  all_catagory/ignore_sub_catogary/entity_chunk")
+    print("F1-value".rjust(10), )
     for idx in range(file_num):
-        print simplified_name(file_list[idx]).rjust(15), 
+        print(simplified_name(file_list[idx]).rjust(15), )
     print 
     for idx in range(file_num):
-        print simplified_name(file_list[idx]).rjust(15), 
+        print(simplified_name(file_list[idx]).rjust(15), )
         for idy in range(file_num):
             result = output_model(result_matrix[idx][idy], result_matrix_ignore_1_layer[idx][idy], result_matrix_ignore_2_layer[idx][idy])
-            print result.rjust(15),
-        print
+            print(result.rjust(15), )
+        print()
 
 
 def calculate_average(input_array):
+    ## 计算平均值
     length = input_array.shape[0]
 
 def output_model(number1, number2):
+    ## 输出模型
     if number1 != 'Nan' and number1 != 'nan':
         if number1 == 1.0:
             return " 100/100  "
@@ -303,6 +311,7 @@ def simplified_name(file_name):
     return name
 
 def generate_report_from_list(file_list):
+    ## 从列表生成报告
     file_num = len(file_list)
     result_matrix = np.ones((file_num, file_num))
     result_matrix_boundary = np.ones((file_num, file_num))
@@ -334,10 +343,3 @@ if __name__ == '__main__':
         compare_files(sys.argv[1], sys.argv[2])
     else:
         generate_f_value_report()
-    
-
-
-
-
-
-
