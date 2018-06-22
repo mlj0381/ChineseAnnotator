@@ -1,4 +1,4 @@
-ChineseAnnotator 中文自然语言处理 (NLP) 标注工具
+中文自然语言处理 (NLP) 标注工具，与 有志之士 共同 促进 中文 自然语言处理 的 发展。
 
 ## 一、关于
 - 这个项目最原始的代码是从 YEDA fork 过来的，访问 [YEDA](https://github.com/jiesutd/YEDDA) 项目，了解更多信息
@@ -29,6 +29,7 @@ ChineseAnnotator 中文自然语言处理 (NLP) 标注工具
 - 点击 `多人标注分析`，然后选择多个 `*.ann` 文件，会给出不同标注结果的 F 值矩阵
  ![alt text](https://github.com/jiesutd/SUTDAnnotator/blob/master/resultMatrix.png "Result Maxtix")
 - 点击 `配对比较`，然后选择 2 个 `*.ann` 文件，会生成相应的对比报告 (报告为 `.tex` 格式，可以进一步编译为 `.pdf` 文件)。示例 pdf 报告如下：
+
 ![alt text](https://github.com/jiesutd/SUTDAnnotator/blob/master/detailReport.png "Detail Report")
 
 ### 其他（重要）功能
@@ -65,7 +66,7 @@ ChineseAnnotator 中文自然语言处理 (NLP) 标注工具
 
 ## 五、参考
 | 项目 | star | fork | 最后更新 | 值得借鉴之处 |
-| ---- | --- | ----- | ------- | ----------- |
+| :---- | --- | ----- | ------- | :----------- |
 | [brat](https://github.com/nlplab/brat) | 575 | 212 | 2017-11-30 | 文件格式 |
 | [IEPY](https://github.com/machinalis/iepy) | 675 | 152 | 2016-10-14 | 主动学习、规则标注 |
 | [anafora](https://github.com/weitechen/anafora) | 82 | 25 | 2018-05-12 | 可视化方式 |
