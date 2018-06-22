@@ -1,95 +1,73 @@
-YEDDA: A Lightweight Collaborative Text Span Annotation Tool
-======
+ChineseAnnotator 中文自然语言处理 (NLP) 标注工具
 
-About:
-====
-YEDDA (the previous SUTDAnnotator) is developed for annotating chunk/entity/event on text (almost all languages including English, Chinese), symbol and even emoji. It supports shortcut annotation which is extremely efficient to annotate text by hand. The user only need to select text span and press shortcut key, the span will be annotated automatically. It also support command annotation model which annotates multiple entities in batch and support export annotated text into sequence text. Besides, intelligent recommendation and adminstrator analysis is also included in updated version. It is compatiable with all mainstream operating systems includings Windows, Linux and MacOS. 
+## 一、关于
+- 这个项目最原始的代码是从 YEDA fork 过来的，访问 [YEDA](https://github.com/jiesutd/YEDDA) 项目，了解更多信息
+- 这 **不是** 一个 web 应用，而是一个基于 Python tkinter 的轻量级桌面端应用
+- 本项目仅支持 Python 3.x，**不考虑** 兼容 Python 2.x
+- 本项目目前仅支持实体标注，未来将加入更多功能
 
-For more details, please refer to [our paper (ACL2018:demo)](https://arxiv.org/pdf/1711.03759.pdf).
+## 二、使用指南
 
-This GUI annotation tool is developed with tkinter package in Python. 
+### 安装 Python 3.x
 
-System required: Python 2.7
+### 下载本项目
 
-Author: [Jie Yang](https://jiesutd.github.io), Phd Candidate of SUTD.
+`git clone https://github.com/SophonPlus/ChineseAnnotator.git` 或直接下载 [压缩包](https://github.com/SophonPlus/ChineseAnnotator/archive/master.zip) 并解压
 
-Interface:
-====
-It provides both annotator interface for efficient annotatation and admin interface for result analysis.
-* Annotator Interface:
- ![alt text](https://github.com/jiesutd/SUTDAnnotator/blob/master/EnglishInterface.png "English Interface demo")
- ![alt text](https://github.com/jiesutd/SUTDAnnotator/blob/master/ChineseInterface.png "Chinese Interface demo")
-* Administrator Interface:
- ![alt text](https://github.com/jiesutd/SUTDAnnotator/blob/master/AdminInterface.png "Administrator Interface demo")
+### 开始标注
+- 执行 `python YEDDA_Annotator.py`，启动标注程序
+- 在标注程序界面的右侧，设置快捷键，如 `a: Action; b: Loc; c: Cont`
+- 点击 `ReMap` 按钮，保存快捷键设置
+- 点击 `Open` 按钮，选择文件 (后缀必须为 .txt 或 .ann)
+- 选中文本，然后使用设置好的快捷键进行标注，标注格式形如 `[@the text span＃Location*]`
+- 通过 `RMOn` 和 `RMOff` 按钮，可以开启或关闭智能推荐
+- 智能推荐会根据已经手动标注的数据，自动标注未标注的数据。其格式为 `[$the text span＃Location*]`，并用绿色展示出来（注意：手动标注以 `[@` 打头，而推荐标注则以 `[$` 打头）
+- 标注结果与原始文件保存在同一个目录中，文件名为 ***"原文件名 + .ann"***
 
-Use as an annotator ?
-====
-* Start the interface: run `python YEDDA_Annotator.py`
-* Configure your shortcut map in the right side of annotation interface, you can leave other labels empty if the shortcut number is enough. For example: `a: Action; b: Loc; c: Cont`
-* Click the `ReMap` button to store the map setting
-* Click `Open` button and select your input file. (You may set your file name ended with .txt or .ann if possible)
-
-This tool supports two ways of annotation (annotated text format `[@the text span＃Location*]`):
-* Shortcut Key Annotation: select the text and press the corresponding shortcut (i.e. `c` for label `Cont`).
-* Command Line Annotation: type the code at command entry (at the bottom of the annotation interface). For example, type `2c3b1a` end with `<Enter>`, it will annotate the following `2` character as type `c: Cont`, the following `3` character as type `b: Loc`, then the following `1` character as  `a: Action`.
-
-Intelligent recommendation:
-* Intelligent recommendation is enabled or disabled by the button `RMOn` and `RMOff`, respectively.
-* If recommendation model is enabled, system will recommend entities based on the annotated text. Recommendation span is formatted as  `[$the text span＃Location*]`in green color. (Notice the difference of annotated and recommended span, the former starts with `[@` while the later starts with `[$`)
-
-The annotated results will be stored synchronously. Annotated file is located at the same directory with origin file with the name of ***"origin name + .ann"***
-
-Use as an administrator ?
-====
-YEDDA provides a simple interface for administartor to evaluate and analyze annotation quality among multiple annotators. After collected multiple annotated `*.ann` files from multiple annotators (annotated on same plain text), YEDDA can give two toolkits to monitor the annotation quality: multi-annotator analysis and pairwise annotators comparison.
-* Start the interface: run `python YEDDA_Admin.py`
-* Multi-Annotator Analysis: press button `Multi-Annotator Analysis` and select multiple annotated `*.ann` files, it will give f-measure matrix among all annotators. The result matrix is shown below:
-
+### 管理标注工作
+- 执行 `python YEDDA_Admin.py`，启动管理程序
+- 点击 `多人标注分析`，然后选择多个 `*.ann` 文件，会给出不同标注结果的 F 值矩阵
  ![alt text](https://github.com/jiesutd/SUTDAnnotator/blob/master/resultMatrix.png "Result Maxtix")
-* Pairwise Annotators Comparison: press button `Pairwise Comparison` and select two annotated `*.ann` files, it will generate a specific comparison report (in `.tex` format, can be compiled as `.pdf` file). The demo pdf file is shown below:
-
+- 点击 `配对比较`，然后选择 2 个 `*.ann` 文件，会生成相应的对比报告 (报告为 `.tex` 格式，可以进一步编译为 `.pdf` 文件)。示例 pdf 报告如下：
 ![alt text](https://github.com/jiesutd/SUTDAnnotator/blob/master/detailReport.png "Detail Report")
 
+### 其他（重要）功能
+1. 按 `ctrl + z` 撤销最近 1 次的修改
+2. 选择已经标注的实体，或将光标置于已标注的实体范围内，按其他实体类别的快捷键 (如 `x`) 更新实体类别 (与 `x` 对应的实体)，按 `q`，删除实体标注
+3. 选择已标注的文本，如 `[@美国＃Location*]`, 再按 `q`, 删除实体标注，即恢复到未标注的状态 (如"美国")
+4. 确认/删除推荐标注的实体：将光标置于推荐标注的实体范围内，按 `y` (确认)，按 `q` (退出)
+5. 点击 `export` 按钮，会将 ***".ann"*** 文件导出为同名的 ***".anns"*** 文件（存放在同一目录下）。导出文件为序列标注的格式。
+  - 源代码中，参数 `self.seged` 用于控制导出的行为。如果句子由空格间隔的单词构成（英文或已分词的中文），则该值应设置为 `True`，否则应设置为 `False`（如未分词的中文）
+  - 另一个参数 `self.tagScheme` 控制导出的格式，***".anns"*** 文件将使用 `BMES` 格式，如何该值为 `"BMES"`，否则导出格式为 `"BIO"`
 
-Important features:
-=====
-1. Type `ctrl + z` will undo  the most recent modification
-2. Put cursor within an entity span, press shortcut key (e.g. `x`) to update label (binded with `x`) of the entity where cursor is belonging. (`q` for remove the label)
-3. Selected the annotated text, such as `[@美国＃Location*]`, then press `q`, the annotated text will be recoverd to unannotate format (i.e. "美国").
-4. Change label directly, select entity content or put cursor inside the entity span (such as `[@美国＃Location*]`), then press `x`, the annotated text will change to new label mapped with shortcut `x` (e.g. `[@美国#Organization*]`).
-5. Confirm or remove recommended entity: put cursor inside of the entity span and press `y` (yes) or `q` (quit).
-6. In the command entry, just type `Enter` without any command, the cursor in text will move to the head of next line. (You can monitor this through "Cursor").
-7. The "Cursor" shows the current cursor position in text widget, with `row` and `col` represent the row and column number, respectively.
-8. `Export` button will export the ***".ann"*** file as a identity name with ***".anns"*** in the same directory. The exported file list the content in sequence format. In the source code, there is a flag `self.seged` which controls the exported bahaviour. If your sentences are consist of words seperated with space (such as segmentated Chinese and English), then you may set it `True`, otherwise set it as `False` (for sentences which are consist of characters without space, such as unsegmentated Chinese text). Besides, another flag `self.tagScheme` controls the exporting format, the exported ***".anns"*** will use the `BMES` format if this flag is set to `"BMES"`, otherwise the exported file is formatted as `"BIO".`
+## 三、FAQ
+1. 为什么是桌面端应用？
 
+  - 理由一：我们调研了其他的开源标注工具，包括 [brat](https://github.com/nlplab/brat) 在内的大部分工具，都有点太复杂了，难以扩展
 
-Cite: 
-========
-If you use YEDDA for research, please cite this report as follows:
+  - 理由二：开发/维护 Web 应用，涉及到前/后端的工作，需要额外的知识和技能。我们相信在 NLP 领域，Python 的普及程度要远超 Web 开发，将项目限定在 Python 之内，能够让更多感兴趣的 NLP 业内人士参与其中，共同促进中文自然语言处理的发展
 
-    @article{yang2017yedda,  
-     title={YEDDA: A Lightweight Collaborative Text Span Annotation Tool},  
-     author={Yang, Jie and Zhang, Yue and Li, Linwei and Li, Xingxuan},  
-     booktitle={Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (ACL): Demonstration},
-     year={2018}  
-    } 
+2. 你们知道一个叫 [Chinese-Annotator]( https://github.com/crownpku/Chinese-Annotator) 的项目吗？
 
+  - 当然！我们在一开始调研中文自然语言处理标注工具的时候，就注意到这个项目了。他们在 [Wiki](https://github.com/crownpku/Chinese-Annotator/wiki/Annotator-Examples) 中，详细总结了几款有代表性的标注工具，极大地帮助了我们调研工作的开展。
 
-Updating...
-====
-* 2018-May-07, Repository is renamed as YEDDA now!
-* 2018-May-01, Our paper has been accepted as a demonstration at ACL 2018.
-* 2017-Sep-27, (YEDDA V 1.0): project was officially named as YEDDA ! See our paper [here](https://arxiv.org/pdf/1711.03759.pdf).
-* 2017-June-24, (V 0.6): support nested coloring; add event annotation beta version [Event_beta.py](Event_beta.py)
-* 2017-May-31, (V 0.6): optimize for Windows OS.
-* 2017-Apr-26, (V 0.5.3): fix bug with line merge when change entity type.
-* 2017-Apr-20, (V 0.5.2): fix bugs with `newline` problem on MacOS/Linux/Windows. (`\r` `\n` `\r\n`)
-* 2017-Apr-20, (V 0.5.1): change entity label more directly; optimize cursor figure.
-* 2017-Apr-19, (V 0.5): update entity represent as `[@Entity#Type*]`; support change label directly; fix some bugs.
-* 2017-Apr-15, (V 0.4): update example and readme.
-* 2017-Apr-13, (V 0.4): modify color; support setting color single line or whole file (may be slow in large file) (`self.colorAllChunk`).
-* 2017-Apr-12, (V 0.4): support BMES/BIO export (`self.tagScheme`); support segmented sentence export(`self.seged`); can save previous shortcut setting.
-* 2016-Mar-01, (V 0.3): fix export bug (bug: set space when sentence didn't include any effective label).
-* 2016-Jan-11, (V 0.2): add sequence format export function.
-* 2016-Jan-09, (V 0.1): init version.
+  - 但是，遗憾的是，截止目前 (2018-06-22) 为止，这个工具仍然处于开发阶段，尚不可用。这让我们萌生了开始本项目的想法。
 
+3. 为什么选择从 fork [YEDA](https://github.com/jiesutd/YEDDA) 开始？
+  - 我们仔细调研了大量的标注工具，而 YEDA 可能是其中功能最简陋、代码最精简的项目了。但这恰恰是我们需要的，其他项目都太复杂，难以着手改造。
+
+## 四、未来计划
+1. 采用 brat 的文件格式
+2. 采用 anafora 的可视化方式
+3. 加入规则标注功能
+4. 加入文本分类标注功能
+5. 加入主动学习功能
+
+## 五、参考
+| 项目 | star | fork | 最后更新 | 值得借鉴之处 |
+| ---- | --- | ----- | ------- | ----------- |
+| [brat](https://github.com/nlplab/brat) | 575 | 212 | 2017-11-30 | 文件格式 |
+| [IEPY](https://github.com/machinalis/iepy) | 675 | 152 | 2016-10-14 | 主动学习、规则标注 |
+| [anafora](https://github.com/weitechen/anafora) | 82 | 25 | 2018-05-12 | 可视化方式 |
+| [Chinese-Annotator](https://github.com/crownpku/Chinese-Annotator) | 384 | 98 | 2018-03-06 | 调研/设计 文档 |
+| [Prodigy](https://prodi.gy/) | - | - | - | 交互方式 |
