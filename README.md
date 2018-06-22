@@ -15,6 +15,9 @@
 `git clone https://github.com/SophonPlus/ChineseAnnotator.git` 或直接下载 [压缩包](https://github.com/SophonPlus/ChineseAnnotator/archive/master.zip) 并解压
 
 ### 开始标注
+![alt text](https://github.com/SophonPlus/ChineseAnnotator/blob/master/EnglishInterface.png "标注英文")
+![alt text](https://github.com/SophonPlus/ChineseAnnotator/blob/master/ChineseInterface.png "标注中文")
+
 - 执行 `python YEDDA_Annotator.py`，启动标注程序
 - 在标注程序界面的右侧，设置快捷键，如 `a: Action; b: Loc; c: Cont`
 - 点击 `ReMap` 按钮，保存快捷键设置
@@ -25,12 +28,14 @@
 - 标注结果与原始文件保存在同一个目录中，文件名为 ***"原文件名 + .ann"***
 
 ### 管理标注工作
+![alt text](https://github.com/SophonPlus/ChineseAnnotator/blob/master/AdminInterface.png "管理员界面")
+
 - 执行 `python YEDDA_Admin.py`，启动管理程序
 - 点击 `多人标注分析`，然后选择多个 `*.ann` 文件，会给出不同标注结果的 F 值矩阵
- ![alt text](https://github.com/jiesutd/SUTDAnnotator/blob/master/resultMatrix.png "Result Maxtix")
+ ![alt text](https://github.com/SophonPlus/ChineseAnnotator/blob/master/resultMatrix.png "结果矩阵")
 - 点击 `配对比较`，然后选择 2 个 `*.ann` 文件，会生成相应的对比报告 (报告为 `.tex` 格式，可以进一步编译为 `.pdf` 文件)。示例 pdf 报告如下：
 
-![alt text](https://github.com/jiesutd/SUTDAnnotator/blob/master/detailReport.png "Detail Report")
+![alt text](https://github.com/SophonPlus/ChineseAnnotator/blob/master/detailReport.png "详细报告")
 
 ### 其他（重要）功能
 1. 按 `ctrl + z` 撤销最近 1 次的修改
@@ -52,7 +57,7 @@
 
   - 当然！我们在一开始调研中文自然语言处理标注工具的时候，就注意到这个项目了。他们在 [Wiki](https://github.com/crownpku/Chinese-Annotator/wiki/Annotator-Examples) 中，详细总结了几款有代表性的标注工具，极大地帮助了我们调研工作的开展。
 
-  - 但是，遗憾的是，截止目前 (2018-06-22) 为止，这个工具仍然处于开发阶段，尚不可用。这让我们萌生了开始本项目的想法。
+  - 但是，遗憾的是，截止目前 (2018-06-22) 为止，这个工具仍然处于开发阶段，尚不可用。这让我们萌生了开始本项目的想法。我们希望一开始就提供可以使用的工具，然后再在使用过程中快速地迭代完善。
 
 3. 为什么选择从 fork [YEDA](https://github.com/jiesutd/YEDDA) 开始？
   - 我们仔细调研了大量的标注工具，而 YEDA 可能是其中功能最简陋、代码最精简的项目了。但这恰恰是我们需要的，其他项目都太复杂，难以着手改造。
@@ -63,6 +68,7 @@
 3. 加入规则标注功能
 4. 加入文本分类标注功能
 5. 加入主动学习功能
+6. ……
 
 ## 五、参考
 | 项目 | star | fork | 最后更新 | 值得借鉴之处 |
