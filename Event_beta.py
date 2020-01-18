@@ -186,7 +186,7 @@ class Example(Frame):
 
     def increaseEventId(self):
         if self.debug:
-            print "Action Track: increaseEventId"
+            print ("Action Track: increaseEventId")
         if self.currentEventId == "":
             self.currentEventId = "1"
         else:
@@ -197,7 +197,7 @@ class Example(Frame):
 
     def decreaseEventId(self):
         if self.debug:
-            print "Action Track: decreaseEventId"
+            print( "Action Track: decreaseEventId")
         if self.currentEventId == "":
             self.currentEventId = "0"
         else:
@@ -208,7 +208,7 @@ class Example(Frame):
 
     def EventIdEnter(self,event):
         if self.debug:
-            print "Action Track: EventIdEnter"
+            print ("Action Track: EventIdEnter")
         content = self.ManualEventIdEntry.get()
         self.currentEventId = content
         self.EventIdString.set("MaxId: %s\nCurId: %s" % (self.maxEventId, self.currentEventId))
@@ -216,8 +216,8 @@ class Example(Frame):
     
     def numberModel(self, event):
         if self.debug:
-            print "Action Track: numberModel"
-        print "Block text."
+            print ("Action Track: numberModel")
+        print( "Block text.")
         if self.currentEventId != "":
             self.currentEventId = str(int(self.currentEventId)*10 + int(event.char))
         else:
@@ -232,7 +232,7 @@ class Example(Frame):
     ## cursor index show with the left click
     def singleLeftClick(self, event):
         if self.debug:
-            print "Action Track: singleLeftClick"
+            print( "Action Track: singleLeftClick")
         cursor_index = self.text.index(INSERT) 
         row_column = cursor_index.split('.')
         cursor_text = ("RowId: %s\nColId: %s" % (row_column[0], row_column[-1]))
@@ -242,7 +242,7 @@ class Example(Frame):
     ## TODO: select entity by double left click
     def doubleLeftClick(self, event):
         if self.debug:
-            print "Action Track: doubleLeftClick"
+            print( "Action Track: doubleLeftClick")
         pass
         # cursor_index = self.text.index(INSERT)
         # start_index = ("%s - %sc" % (cursor_index, 5))
@@ -254,7 +254,7 @@ class Example(Frame):
     ## Disable right click default copy selection behaviour
     def rightClick(self, event):
         if self.debug:
-            print "Action Track: rightClick"
+            print( "Action Track: rightClick")
         try:
             firstSelection_index = self.text.index(SEL_FIRST)
             cursor_index = self.text.index(SEL_LAST)
@@ -301,14 +301,14 @@ class Example(Frame):
 
     def setCursorLabel(self, cursor_index):
         if self.debug:
-            print "Action Track: setCursorLabel"
+            print( "Action Track: setCursorLabel")
         row_column = cursor_index.split('.')
         cursor_text = ("RowId:  %s\nColId:  %s" % (row_column[0], row_column[-1]))
         self.cursorIndex.config(text=cursor_text)
 
     def returnButton(self):
         if self.debug:
-            print "Action Track: returnButton"
+            print ("Action Track: returnButton")
         self.pushToHistory()
         # self.returnEnter(event)
         content = self.entry.get()
@@ -319,7 +319,7 @@ class Example(Frame):
 
     def returnEnter(self,event):
         if self.debug:
-            print "Action Track: returnEnter"
+            print( "Action Track: returnEnter")
         self.pushToHistory()
         content = self.entry.get()
         self.clearCommand()
@@ -330,9 +330,9 @@ class Example(Frame):
     def textReturnEnter(self,event):
         press_key = event.char
         if self.debug:
-            print "Action Track: textReturnEnter, press:",press_key
+            print( "Action Track: textReturnEnter, press:",press_key)
         self.pushToHistory()
-        print "event: ", press_key
+        print( "event: ", press_key)
         # content = self.text.get()
         # self.clearCommand()
         self.text.configure(state='normal')
@@ -343,7 +343,7 @@ class Example(Frame):
 
     def backToHistory(self,event):
         if self.debug:
-            print "Action Track: backToHistory"
+            print ("Action Track: backToHistory")
         if len(self.history) > 0:
             historyCondition = self.history.pop()
             # print "history condition: ", historyCondition
@@ -353,20 +353,20 @@ class Example(Frame):
             # print "get history cursor: ", cursorIndex
             self.writeFile(self.fileName, historyContent, cursorIndex)
         else:
-            print "History is empty!"
+            print( "History is empty!")
         self.text.insert(INSERT, 'p')   # add a word as pad for key release delete
 
     def keepCurrent(self, event):
         if self.debug:
-            print "Action Track: keepCurrent"
+            print( "Action Track: keepCurrent")
         print("keep current, insert:%s"%(INSERT))
-        print "before:", self.text.index(INSERT)
+        print( "before:", self.text.index(INSERT))
         self.text.insert(INSERT, 'p')
-        print "after:", self.text.index(INSERT)
+        print( "after:", self.text.index(INSERT))
 
     def clearCommand(self):
         if self.debug:
-            print "Action Track: clearCommand"
+            print( "Action Track: clearCommand")
         self.entry.delete(0, 'end')
 
 
@@ -377,7 +377,7 @@ class Example(Frame):
 
     def executeCursorCommand(self,command):
         if self.debug:
-            print "Action Track: executeCursorCommand"
+            print ("Action Track: executeCursorCommand")
         content = self.getText()
         print("Command:"+command)
         try:
@@ -394,7 +394,7 @@ class Example(Frame):
                 selected_string = new_string
                 cursor_index = "%s - %sc" % (cursor_index, str(len(new_string_list[1])+4))
             if command == "q":
-                print 'q: remove entity label'
+                print( 'q: remove entity label')
             else:
                 if len(selected_string) > 0:
                     followHalf_content, cursor_index = self.replaceString(followHalf_content, selected_string, command, cursor_index)
@@ -422,7 +422,7 @@ class Example(Frame):
                 selected_string = new_string
                 cursor_index = line_id + '.'+ str(int(matched_span[1])-(len(new_string_list[1])+4))
                 if command == "q":
-                    print 'q: remove entity label'
+                    print( 'q: remove entity label')
                 else:
                     if len(selected_string) > 0:
                         if command in self.pressCommand:
@@ -441,7 +441,7 @@ class Example(Frame):
 
     def executeEntryCommand(self,command):
         if self.debug:
-            print "Action Track: executeEntryCommand"
+            print( "Action Track: executeEntryCommand")
         if len(command) == 0:
             currentCursor = self.text.index(INSERT)
             newCurrentCursor = str(int(currentCursor.split('.')[0])+1) + ".0"
@@ -471,9 +471,9 @@ class Example(Frame):
 
     def deleteTextInput(self,event):
         if self.debug:
-            print "Action Track: deleteTextInput"
+            print ("Action Track: deleteTextInput")
         get_insert = self.text.index(INSERT)
-        print "delete insert:",get_insert
+        print ("delete insert:",get_insert)
         insert_list = get_insert.split('.')
         last_insert = insert_list[0] + "." + str(int(insert_list[1])-1)
         get_input = self.text.get(last_insert, get_insert).encode('utf-8')
@@ -494,8 +494,8 @@ class Example(Frame):
             newcursor_index = "%s + %sc" % (cursor_index, str(len(self.pressCommand[replaceType])+5))
             # newcursor_index = cursor_indexList[0] + "." + str(int(cursor_indexList[1])+ len(new_string))
         else:
-            print "Invaild command!"  
-            print "cursor index: ", self.text.index(INSERT)  
+            print ("Invaild command!"  )
+            print( "cursor index: ", self.text.index(INSERT)  )
             return content, cursor_index
         # print "new string: ", new_string
         # print "find: ", content.find(string)
@@ -523,12 +523,12 @@ class Example(Frame):
             self.autoLoadNewFile(new_name, newcursor_index)
             # self.generateSequenceFile()
         else:
-            print "Don't write to empty file!"        
+            print ("Don't write to empty file!"        )
 
 
     def autoLoadNewFile(self, fileName, newcursor_index):
         if self.debug:
-            print "Action Track: autoLoadNewFile"
+            print( "Action Track: autoLoadNewFile")
         if len(fileName) > 0:
             self.text.delete("1.0",END)
             text = self.readFile(fileName)
@@ -542,7 +542,7 @@ class Example(Frame):
 
     def setColorDisplay(self):
         if self.debug:
-            print "Action Track: setColorDisplay"
+            print( "Action Track: setColorDisplay")
         self.text.config(insertbackground='red', insertwidth=4, font=self.fnt)
 
         countVar = StringVar()
@@ -601,7 +601,7 @@ class Example(Frame):
 
     def setDisplay(self):
         if self.debug:
-            print "Action Track: setDisplay"
+            print( "Action Track: setDisplay")
         self.text.config(insertbackground='red', insertwidth=4)
         self.text.mark_set("matchStart", "1.0")
         self.text.mark_set("matchEnd", "1.0") 
@@ -645,7 +645,7 @@ class Example(Frame):
     
     def pushToHistory(self):
         if self.debug:
-            print "Action Track: pushToHistory"
+            print( "Action Track: pushToHistory")
         currentList = []
         content = self.getText()
         cursorPosition = self.text.index(INSERT)
@@ -656,7 +656,7 @@ class Example(Frame):
 
     def pushToHistoryEvent(self,event):
         if self.debug:
-            print "Action Track: pushToHistoryEvent"
+            print( "Action Track: pushToHistoryEvent")
         currentList = []
         content = self.getText()
         cursorPosition = self.text.index(INSERT)
@@ -668,7 +668,7 @@ class Example(Frame):
     ## update shortcut map
     def renewPressCommand(self):
         if self.debug:
-            print "Action Track: renewPressCommand"
+            print ("Action Track: renewPressCommand")
         seq = 0
         new_dict = {}
         listLength = len(self.labelEntryList)
@@ -720,7 +720,7 @@ class Example(Frame):
 
     def generateSequenceFile(self):
         if (".ann" not in self.fileName) and (".txt" not in self.fileName): 
-            print "Export only works on filename ended in .ann or .txt! Please rename file."
+            print ("Export only works on filename ended in .ann or .txt! Please rename file.")
             return -1
         fileLines = open(self.fileName, 'rU').readlines()
         lineNum = len(fileLines)
@@ -737,8 +737,8 @@ class Example(Frame):
                 ## use null line to seperate sentences
                 seqFile.write('\n')
         seqFile.close()
-        print "Exported file into sequence style in file: ",new_filename
-        print "Line number:",lineNum
+        print ("Exported file into sequence style in file: ",new_filename)
+        print( "Line number:",lineNum)
 
 
 def getWordTagPairs(tagedSentence, seged=True, tagScheme="BMES", onlyNP=False, entityRe=r'\[\@.*?\#.*?\*\]'):
@@ -782,14 +782,14 @@ def getWordTagPairs(tagedSentence, seged=True, tagScheme="BMES", onlyNP=False, e
             if chunk_list[idx][1] == chunk_list[idx-1][2]:
                 full_list.append(chunk_list[idx])
             elif chunk_list[idx][1] < chunk_list[idx-1][2]:
-                print "ERROR: found pattern has overlap!", chunk_list[idx][1], ' with ', chunk_list[idx-1][2]
+                print( "ERROR: found pattern has overlap!", chunk_list[idx][1], ' with ', chunk_list[idx-1][2])
             else:
                 full_list.append([newSent[chunk_list[idx-1][2]:chunk_list[idx][1]], chunk_list[idx-1][2], chunk_list[idx][1], False])
                 full_list.append(chunk_list[idx])
 
         if idx == len(chunk_list) - 1 :
             if chunk_list[idx][2] > newSentLength:
-                print "ERROR: found pattern position larger than sentence length!"
+                print ("ERROR: found pattern position larger than sentence length!")
             elif chunk_list[idx][2] < newSentLength:
                 full_list.append([newSent[chunk_list[idx][2]:newSentLength], chunk_list[idx][2], newSentLength, False])
             else:
@@ -803,7 +803,7 @@ def turnFullListToOutputPair(fullList, seged=True, tagScheme="BMES", onlyNP=Fals
         if eachList[3]:
             contLabelList = eachList[0].strip('[@]').rsplit('#', 1)
             if len(contLabelList) != 2:
-                print "Error: sentence format error!"
+                print( "Error: sentence format error!")
             label = contLabelList[1].strip('*')
             if seged:
                 contLabelList[0] = contLabelList[0].split()
