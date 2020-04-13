@@ -28,6 +28,8 @@ def maximum_matching(train_text, decode_text, entityRe = r'\[\@.*?\#.*?\*\](?!\#
 
 	if len(extracted_dict) == 0:
 		return train_text + decode_text
+		# return decode_text
+
 
 	## only recommend following 10 sentences (reduce time)
 	near_sentences = ""
@@ -107,7 +109,7 @@ def maximum_matching(train_text, decode_text, entityRe = r'\[\@.*?\#.*?\*\](?!\#
 	assert(len(entity_recommend_list)== len(entity_recognized_list))
 	recommend_decode_text =  merge_text_with_entity(decode_origin, entity_recognized_list, entity_recommend_list)
 	return train_text + recommend_decode_text + far_sentences
-	
+	# return recommend_decode_text + far_sentences	
 
 def merge_text_with_entity(origin_text, recognized_list, recommend_list):
 	length = len(origin_text)
