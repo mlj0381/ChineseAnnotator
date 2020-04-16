@@ -252,6 +252,7 @@ class Example(Frame):
         # 点击实体后获取内容
         # self.list.get(self.list.curselection())
         self.ner=self.list.get(self.list.curselection())
+        print()
         self.NerList.config(text=self.ner)
 
 
@@ -267,14 +268,14 @@ class Example(Frame):
         print(self.pressCommand)
         text,_=self.autoreplaceString2(text,self.ner,'a',cursor_index)
         # self.fileName
-        fileName=self.fileName+self.ner+".txt"
+        # fileName=self.fileName+self.ner+".txt"
         for t in  des:
             # t=t+"[@"+t+"#描述*]"
 
             # text=self.addRecommendContent(t,text,False)
             text,cursor_index=self.autoreplaceString2(text,t,'b',cursor_index)
             # text=maximum_matching(t,text)
-            # self.writeFile(fileName, text, cursor_index)
+            self.writeFile(self.fileName, text, cursor_index)
             print("##"*20)
             # print(text)
             
@@ -370,7 +371,8 @@ class Example(Frame):
 
     def onOpen(self):
         """打开文件"""
-        ftypes = [('all files', '.*'), ('text files', '.txt'), ('ann files', '.ann')]
+        # ftypes = [('all files', '.*'), ('text files', '.txt'), ('ann files', '.ann')]
+        ftypes = [ ('all files', '.txt*'),('text files', '.txt'), ('ann files', '.ann')]
         dlg = tkFileDialog.Open(self, filetypes = ftypes,title="选择需要标记的文本")
         # file_opt = options =  {}
         # options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
@@ -397,6 +399,7 @@ class Example(Frame):
             # self.NerList.config(text=ner_list[0])
             # self.list.insert(ner_list)	#我们也可以直接添加
             self.list.delete(0,self.list.size())
+            ner_list=list(set(ner_list))
             for item in ner_list:
                 self.list.insert(0,item)
             # self.list.pack()
@@ -406,6 +409,7 @@ class Example(Frame):
         with codecs.open(filename, "rU", encoding='utf-8') as f:
             text = f.read()
             self.fileName = filename
+            self.fileTitle = filename
             return text
 
     def setFont(self, value):
@@ -656,14 +660,29 @@ class Example(Frame):
         """写文件"""
         if self.debug:
                 print("Action track: writeFile")
-
+        fileName=self.fileName
+        # self.list.get(self.list.curselection())
+        print("ner:",self.ner)
+        print("fileName:",fileName)
         if len(fileName) > 0:
-            new_name = fileName + '.ann' if '.ann' not in fileName else fileName
+            # new_name = fileName +self.ner+ '.ann' if '.ann' not in fileName else fileName
+            # if ".txt"+self.ner+ '.ann'not in fileName:
+            #     new_name = fileName +self.ner+ '.ann'
+            # else:
+            #     new_name = fileName
+            if fileName.endswith(self.ner+ '.ann'):
+                new_name = fileName
+            else:
+
+                new_name = fileName +self.ner+ '.ann'
+
+            print("保存文件：",new_name)
             with codecs.open(new_name, 'w', encoding='utf-8') as ann_file:
                 ann_file.write(content)
             
-            # print("Writed to new file: ", new_name)
+            print("Writed to new file: ", new_name)
             self.autoLoadNewFile(new_name, newcursor_index)
+            self.fileName=fileName
             # self.generateSequenceFile()
         else:
             print("Don't write to empty file!")
