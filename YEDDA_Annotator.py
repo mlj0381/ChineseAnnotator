@@ -34,8 +34,10 @@ class Example(Frame):
         self.OS = platform.system().lower()
         self.parent = parent
         self.fileName = ""
+        self.new_filename=''
         self.org_txt="默认原文"
         self.ner=''
+        self.fileTitle=''
         self.debug = False
         self.colorAllChunk = True
         self.recommendFlag = False #默认是否开启自动标记
@@ -132,16 +134,19 @@ class Example(Frame):
         noRecButton.grid(row=4, column=self.textColumn +1)
 
         removeButton = Button(self, text="清除所有标记", command=self.removeRecommend)
+        removeButton.grid(row=16, column=self.textColumn +1)
+
+        removeButton = Button(self, text="清除所有描述标记", command=self.removeRecommendAll)
         removeButton.grid(row=5, column=self.textColumn +1)
 
         ubtn = Button(self, text="ReMap", command=self.renewPressCommand)
-        ubtn.grid(row=6, column=self.textColumn +1, pady=4)
+        ubtn.grid(row=15, column=self.textColumn +1, pady=4)
 
         exportbtn = Button(self, text="导出", command=self.generateSequenceFile)
-        exportbtn.grid(row=7, column=self.textColumn + 1, pady=4)        
+        exportbtn.grid(row=6, column=self.textColumn + 1, pady=4)        
 
         cbtn = Button(self, text="退出", command=self.quit)
-        cbtn.grid(row=8, column=self.textColumn + 1, pady=4)
+        cbtn.grid(row=17, column=self.textColumn + 1, pady=4)
 
         self.cursorName = Label(self, text="Cursor: ", foreground="Blue", font=(self.textFontStyle, 14, "bold"))
         self.cursorName.grid(row=9, column=self.textColumn +1, pady=4)
@@ -252,16 +257,34 @@ class Example(Frame):
         # 点击实体后获取内容
         # self.list.get(self.list.curselection())
         self.ner=self.list.get(self.list.curselection())
-        print()
+        self.rename()
+        # print()
         self.NerList.config(text=self.ner)
+        fileName=self.fileTitle+self.ner+".ann"
+        print("尝试已经存在文件",fileName)
+        try:
 
+            text = self.readFile(fileName)
+            print("加载已经存在文件",fileName)
+            self.text.delete("1.0",END)
+        
+            # i=0
+            # cursor_index = self.text.index(SEL_LAST)
+            cursor_index = self.text.index(INSERT)
+            self.writeFile(self.fileName, text, cursor_index)
+
+            return
+        except:
+            text=self.org_txt
+            print("不存在，新建文件")
+            pass
 
         des=getDes(self.ner,self.org_txt)
         print(des)
         # 更新内容
         # self.text.delete(0, END)
         self.text.delete("1.0",END)
-        text=self.org_txt
+        
         # i=0
         # cursor_index = self.text.index(SEL_LAST)
         cursor_index = self.text.index(INSERT)
@@ -277,7 +300,7 @@ class Example(Frame):
             # text=maximum_matching(t,text)
             self.writeFile(self.fileName, text, cursor_index)
             print("##"*20)
-            # print(text)
+            # print("text",text)
             
         #   text=maximum_matching(t,text)
     #     text,cursor_index=self.replaceString(text,t,'b',cursor_index)
@@ -342,13 +365,36 @@ class Example(Frame):
         except TclError:
             pass
 
+    def removeRecommendAll(self):
+        """清空标记"""
+        self.recommendFlag = True
+        cursor_index = self.text.index(INSERT)
+        # print(self.pressCommand)
+        content = self.getText()
+        # text,_=self.autoreplaceString(content,self.ner,'a',cursor_index)
 
+        ner_list=re.findall(r"\[\@(.+?)#实体\*]",content)
+        content = content.replace( "[@" , '', )
+        content = content.replace( "#描述*]" , '' )
+        text = content.replace( "#实体*]" , '' )
+        print("提取到的ner_list",ner_list)
+        for n in ner_list:
+            text,_=self.autoreplaceString2( text, n, 'a', cursor_index)
+
+
+
+        print("text",text)
+        self.text.delete("1.0",END)
+        self.text.insert(INSERT, text)
+        self.setColorDisplay()     
     def removeRecommend(self):
         """清空标记"""
         self.recommendFlag = True
         cursor_index = self.text.index(INSERT)
         # print(self.pressCommand)
-        text,_=self.autoreplaceString2(self.org_txt,self.ner,'a',cursor_index)
+        content =self.org_txt
+        # 
+        text,_=self.autoreplaceString2(content,self.ner,'a',cursor_index)
         # removeRecommendContent
         print("text",text)
         self.text.delete("1.0",END)
@@ -404,12 +450,15 @@ class Example(Frame):
                 self.list.insert(0,item)
             # self.list.pack()
             # self.setMapShow()
+        
     def readFile(self, filename):
         """读文件"""
         with codecs.open(filename, "rU", encoding='utf-8') as f:
             text = f.read()
             self.fileName = filename
-            self.fileTitle = filename
+            if filename.endswith(".txt"):
+                self.fileTitle = filename
+            
             return text
 
     def setFont(self, value):
@@ -574,6 +623,7 @@ class Example(Frame):
                 cursor_index = line_id + '.'+ str(int(matched_span[1])-(len(new_string_list[1])+4))
                 if command == "q":
                     print('q: remove entity label')
+                    self.writeFile(self.fileName, content, cursor_index)
                 elif command == 'y':
                     print("y: comfirm recommend label")
                     old_key = self.pressCommand.keys()[self.pressCommand.values().index(old_entity_type)]
@@ -656,6 +706,20 @@ class Example(Frame):
         content = content.replace(string, new_string, 1)
         return content, newcursor_index
 
+    def rename(self):
+        fileName=self.fileName
+        if fileName.endswith(self.ner+ '.ann'):
+            new_name = fileName
+        # elif  fileName.endswith(self.ner+ '.ann'):
+        #     pass
+        elif  fileName.endswith('.txt'):
+
+            new_name = fileName +self.ner+ '.ann'
+        else:
+            new_name = self.fileTitle +self.ner+ '.ann'
+        self.new_filename=new_name
+
+
     def writeFile(self, fileName, content, newcursor_index):
         """写文件"""
         if self.debug:
@@ -672,20 +736,28 @@ class Example(Frame):
             #     new_name = fileName
             if fileName.endswith(self.ner+ '.ann'):
                 new_name = fileName
-            else:
+            # elif  fileName.endswith(self.ner+ '.ann'):
+            #     pass
+            elif  fileName.endswith('.txt'):
 
                 new_name = fileName +self.ner+ '.ann'
+            else:
+                new_name = self.fileTitle +self.ner+ '.ann'
+
 
             print("保存文件：",new_name)
+            self.new_name=new_name
             with codecs.open(new_name, 'w', encoding='utf-8') as ann_file:
                 ann_file.write(content)
             
             print("Writed to new file: ", new_name)
             self.autoLoadNewFile(new_name, newcursor_index)
-            self.fileName=fileName
+            # if 
+            self.new_filename=new_name
             # self.generateSequenceFile()
         else:
             print("Don't write to empty file!")
+        
 
     def addRecommendContent(self, train_data, decode_data, recommendMode):
         """添加推荐的内容"""
@@ -863,6 +935,7 @@ class Example(Frame):
 
     def generateSequenceFile(self):
         """生成序列标注文件"""
+
         if (".ann" not in self.fileName) and (".txt" not in self.fileName): 
             out_error = u"导出功能只能用于 .ann 或 .txt 文件。"
             print(out_error)
@@ -874,7 +947,10 @@ class Example(Frame):
         
         lineNum = len(fileLines)
 
-        new_filename = self.fileName.split('.ann')[0]+self.ner+ '.anns'
+        # new_filename = self.fileName.split('.ann')[0]+self.ner+ '.anns'
+        # new_filename = self.new_filename.split('.ann')[0]+""+self.ner+ '.anns'
+        new_filename = self.new_filename.split('.ann')[0]+""+ '.anns'
+        print("new_filename",new_filename,self.new_filename)
         with codecs.open(new_filename, 'w', encoding='utf-8') as seqFile: 
             for line in fileLines:
                 if len(line) <= 2:
@@ -883,7 +959,9 @@ class Example(Frame):
                 else:
                     if not self.keepRecommend:
                         line = removeRecommendContent(line, self.recommendRe)
+                    print(line)
                     wordTagPairs = getWordTagPairs(line, self.seged, self.tagScheme, self.onlyNP, self.goldAndrecomRe)
+                    print(wordTagPairs)
                     for wordTag in wordTagPairs:
                         seqFile.write(wordTag)
                     ## use null line to seperate sentences
@@ -904,11 +982,13 @@ def getNer(text):
     return one
 def getDes(ner,text):
     one=Pred_Marker.pre(ner,text)
-    return one
+
+    return list(set(one))
 
 def getWordTagPairs(tagedSentence, seged=True, tagScheme="BMES", onlyNP=False, entityRe=r'\[\@.*?\#.*?\*\]'):
     newSent = tagedSentence.strip('\n')
     filterList = re.findall(entityRe, newSent)
+    print(filterList)
     newSentLength = len(newSent)
     chunk_list = []
     start_pos = 0
@@ -959,6 +1039,7 @@ def getWordTagPairs(tagedSentence, seged=True, tagScheme="BMES", onlyNP=False, e
                 full_list.append([newSent[chunk_list[idx][2]:newSentLength], chunk_list[idx][2], newSentLength, False])
             else:
                 continue
+
     return turnFullListToOutputPair(full_list, seged, tagScheme, onlyNP)
 
 	
