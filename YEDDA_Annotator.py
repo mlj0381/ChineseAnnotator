@@ -21,18 +21,16 @@ import codecs
 from tkitMarker_bert import Marker
 from utils.recommend import *
 
-Pred_Marker=Marker(model_path="./tkitfiles/miaoshu")
-Pred_Marker.load_model()
-Ner_Marker=Marker(model_path="./tkitfiles/tmarker_bert_ner")
-Ner_Marker.load_model()
 
-class Example(Frame):
+class YEDDA(Frame):
     """TODO 换成更贴切的类名"""
     def __init__(self, parent):
         Frame.__init__(self, parent)
         self.Version = u"YEDDA-V1.0 标注工具 AI优化版本"
         self.OS = platform.system().lower()
         self.parent = parent
+
+
         self.fileName = ""
         self.new_filename=''
         self.org_txt="默认原文"
@@ -40,8 +38,8 @@ class Example(Frame):
         self.fileTitle=''
         self.debug = False
         self.colorAllChunk = True
-        self.recommendFlag = False #默认是否开启自动标记
-        self.history = deque(maxlen=20)
+        self.recommendFlag = True #默认是否开启自动标记
+        self.history = deque(maxlen=40)
         self.currentContent = deque(maxlen=1)
         self.pressCommand = {'a':"Artifical",
                              'b':"Event",
@@ -90,6 +88,8 @@ class Example(Frame):
     def initUI(self): 
         """初始化 UI"""
         self.parent.title(self.Version)
+        # self.parent.configure(background='red')
+        self.parent['bg'] = '#9a9a9a'
         self.pack(fill=BOTH, expand=True)
         
         for idx in range(0,self.textColumn):
@@ -101,22 +101,23 @@ class Example(Frame):
         self.columnconfigure(self.textColumn+4, weight=1)
         for idx in range(0,16):
             self.rowconfigure(idx, weight =1)
-        self.rowconfigure(0, weight=150)
-        self.rowconfigure(1, weight=5)
+        # self.rowconfigure(0, weight=0)
+        # self.rowconfigure(1, weight=5)
 
-
-        self.title = Label(self, text=u"Ai标记助手")
-        self.title.grid(row=0, column=0,sticky=W, pady=4, padx=5)
+        self.title = Label(self, text=u"Ai标记助手",font=(self.textFontStyle, 14, "bold"))
+        self.title.grid(row=1, column=0,rowspan=1,sticky=W, pady=0, padx=0)
 
         self.lbl = Label(self, text=u"文件：没有打开的文件")
-        self.lbl.grid(row=0, column=1,sticky=W, pady=4, padx=5)
+        self.lbl.grid(row=1, column=1,sticky=W, pady=0, padx=0)
 
-
-        self.fnt = tkFont.Font(family=self.textFontStyle,size=self.textRow,weight="bold",underline=0)
-
+        # self.fnt = tkFont.Font(family=self.textFontStyle,size=self.textRow,weight="normal",underline=0)
+        self.fnt = tkFont.Font(family=self.textFontStyle,size=10,weight="normal",underline=0)
         #主体文本编辑框
-        self.text = Text(self, font=self.fnt, selectbackground=self.selectColor)
-        self.text.grid(row=2, column=1, columnspan=self.textColumn, rowspan=self.textRow, padx=12, sticky=E+W+S+N)
+        # self.text = Text(self,font=("Helvetica", 12), selectbackground=self.selectColor)
+        self.text = Text(self,font=self.fnt , selectbackground=self.selectColor)
+        # self.text = Text(self,font=(self.textFontStyle, 10, "normal") , selectbackground=self.selectColor)
+        self.text.grid(row=2, column=1, columnspan=self.textColumn, rowspan=self.textRow+12, padx=12, sticky=E+W+S+N)
+        # self.text.insert("打开内容显示在这里！")
 
         self.sb = Scrollbar(self)
         self.sb.grid(row = 2, column = self.textColumn, rowspan = self.textRow, padx=0, sticky = E+W+S+N)
@@ -124,74 +125,77 @@ class Example(Frame):
         self.sb['command'] = self.text.yview 
         # self.sb.pack()
 
-        abtn = Button(self, text="打开文件", command=self.onOpen)
+        abtn = Button(self, text="打开txt文件", command=self.onOpen)
         abtn.grid(row=2, column=self.textColumn +1)
-
+        # abtn = Button(self, text="打开ann文件", command=self.onOpenAnn)
+        # abtn.grid(row=3, column=self.textColumn +1)
         recButton = Button(self, text="打开自动标记", command=self.setInRecommendModel)
-        recButton.grid(row=3, column=self.textColumn +1)
+        recButton.grid(row=4, column=self.textColumn +1)
 
         noRecButton = Button(self, text="关闭自动标记", command=self.setInNotRecommendModel)
-        noRecButton.grid(row=4, column=self.textColumn +1)
+        noRecButton.grid(row=5, column=self.textColumn +1)
+
+        removeButton = Button(self, text="清除描述标记", command=self.removeRecommendAll)
+        removeButton.grid(row=6, column=self.textColumn +1)
 
         removeButton = Button(self, text="清除所有标记", command=self.removeRecommend)
-        removeButton.grid(row=16, column=self.textColumn +1)
+        removeButton.grid(row=7, column=self.textColumn +1)
 
-        removeButton = Button(self, text="清除所有描述标记", command=self.removeRecommendAll)
-        removeButton.grid(row=5, column=self.textColumn +1)
+        exportbtn = Button(self, text="导出", command=self.generateSequenceFile)
+        exportbtn.grid(row=8, column=self.textColumn + 1, pady=4)        
 
         ubtn = Button(self, text="ReMap", command=self.renewPressCommand)
         ubtn.grid(row=15, column=self.textColumn +1, pady=4)
 
-        exportbtn = Button(self, text="导出", command=self.generateSequenceFile)
-        exportbtn.grid(row=6, column=self.textColumn + 1, pady=4)        
-
         cbtn = Button(self, text="退出", command=self.quit)
         cbtn.grid(row=17, column=self.textColumn + 1, pady=4)
 
-        self.cursorName = Label(self, text="Cursor: ", foreground="Blue", font=(self.textFontStyle, 14, "bold"))
+        self.cursorName = Label(self, text="光标定位: ", foreground="Blue", font=(self.textFontStyle, 12, "bold"))
         self.cursorName.grid(row=9, column=self.textColumn +1, pady=4)
-        self.cursorIndex = Label(self, text=("row: %s\ncol: %s" % (0, 0)), foreground="red", font=(self.textFontStyle, 14, "bold"))
+        self.cursorIndex = Label(self, text=("row: %s\ncol: %s" % (0, 0)), foreground="red", font=(self.textFontStyle, 12, "bold"))
         self.cursorIndex.grid(row=10, column=self.textColumn + 1, pady=4)
 
-        self.RecommendModelName = Label(self, text="RModel: ", foreground="Blue", font=(self.textFontStyle, 14, "bold"))
+        self.RecommendModelName = Label(self, text="推荐模式: ", foreground="Blue", font=(self.textFontStyle, 12, "bold"))
         self.RecommendModelName.grid(row=12, column=self.textColumn +1, pady=4)
-        self.RecommendModelFlag = Label(self, text=str(self.recommendFlag), foreground="red", font=(self.textFontStyle, 14, "bold"))
+        self.RecommendModelFlag = Label(self, text=str(self.recommendFlag), foreground="red", font=(self.textFontStyle, 12, "bold"))
         self.RecommendModelFlag.grid(row=13, column=self.textColumn + 1, pady=4)
+
+
+
 
         #这里开始定义Terry
         self.NerName = Label(self, text="实体列表: ", foreground="Blue", font=(self.textFontStyle, 14, "bold"))
-        self.NerName.grid(row=2, column=0,columnspan=1, pady=1)
-
-
+        self.NerName.grid(row=2, column=0,columnspan=1, pady=1,sticky=W+E+N+S)
 
         # self.list.pack()
-
-        self.NerList = Label(self, text="选择 ", foreground="red", font=(self.textFontStyle, 14, "bold"))
-        self.NerList.grid(row=3, column=0, columnspan=1,pady=1)
+        
+        self.NerList = Label(self, text="没有选择 ", foreground="red", font=(self.textFontStyle, 12, "bold"))
+        self.NerList.grid(row=3, column=0, columnspan=1,pady=1,sticky=W+E+N+S)
         self.list = Listbox(self)	#还有这里
         # for item in ['1','2','3']:
         #     self.list.insert(0,item)		#我们用insert方法将元素添加到列表中去
         #     #注意这里的0指的是从哪个位置开始插入，后面一个就是要添加的内容，我们用for循环遍历添加进去
         #     #如果需要添加到末尾，将0改为“end”即可
-
         # self.list.insert(0,'1','2','3')	#我们也可以直接添加
-        self.list.grid(row=8, column=0, columnspan=1,pady=1)
+        self.list.grid(row=8, column=0, columnspan=1,pady=1,sticky=W+E+N+S)
 
-        self.helpList = Label(self, text="帮助:q选择后删除标记 、\n 其它", foreground="blue", font=(self.textFontStyle, 9, ""))
-        self.helpList.grid(row=10, column=0, columnspan=1,pady=1)
+        self.helpList = Label(self, text="帮助:q选择后删除标记 、其它\n ",borderwidth=1, relief="ridge", foreground="blue", font=(self.textFontStyle,12, ""))
+        self.helpList.grid(row=10, column = self.textColumn +2,columnspan=2, rowspan = 3,sticky=W+E+N+S)
 
-
-
+        self.logLabel = Label(self, text="执行日志：", foreground="blue")
+        self.logLabel.grid(row=11, column=0, columnspan=1,pady=1,sticky=W+E+N+S)
+        self.log = Label(self, text="系统已经启动！", foreground="blue",borderwidth=1, relief="ridge", font=(self.textFontStyle, 9, ""))
+        self.log.grid(row=11, column=0, columnspan=1,rowspan=5,pady=1,sticky=W+E+N+S)
 
         self.mynerLabel = Label(self, text ="输入实体: ", foreground="blue", font=(self.textFontStyle, 14, "bold"))
-        self.mynerLabel.grid(row=4, column = 0,columnspan=1, rowspan = 1, padx = 3)
+        self.mynerLabel.grid(row=4, column = 0,columnspan=1, rowspan = 1, padx = 1,sticky=W+E+N+S)
 
 
         self.myner = Entry(self, foreground="blue", font=(self.textFontStyle, 14, "bold"))
         # self.myner.insert(0, self.pressCommand[key])
-        self.myner.grid(row=6, column = 0, columnspan=1, rowspan = 1)
+        self.myner.grid(row=6, column = 0, columnspan=1, rowspan = 1,padx=4,sticky=W+E+N+S)
         self.mynerubtn = Button(self, text="添加实体", command=self.addner)
-        self.mynerubtn.grid(row=7, column=0, pady=4)
+        self.mynerubtn.grid(row=7,columnspan=1, column=0, pady=1,sticky=W+E+N+S)
 
 
 
@@ -204,17 +208,17 @@ class Example(Frame):
 
         # recommend_value = StringVar()
         # recommend_value.set("R")
-        # a = Radiobutton(self.parent,  text="Recommend",   width=12, variable=recommend_value, value="R")
+        # a = Radiobutton(self.parent,  text="推荐",   width=12, variable=recommend_value, value="R")
         # # a.grid(row =1 , column = 2)
         # a.pack(side='left')
-        # b = Radiobutton(self.parent, text="NotRecommend",   width=12,  variable=recommend_value, value="N")
+        # b = Radiobutton(self.parent, text="不自动推荐",   width=12,  variable=recommend_value, value="N")
         # # b.grid(row =1 , column = 3)
         # b.pack(side='left')       
 
-        lbl_entry = Label(self, text=u"命令：")
-        lbl_entry.grid(row = self.textRow +1,  sticky = E+W+S+N, pady=4,padx=4)
+        # lbl_entry = Label(self, text=u"命令：")
+        # lbl_entry.grid(row = self.textRow +1,  sticky = E+W+S+N, pady=4,padx=4)
         self.entry = Entry(self)
-        self.entry.grid(row = self.textRow +1, columnspan=self.textColumn + 1, rowspan = 1, sticky = E+W+S+N, pady=4, padx=80)
+        # self.entry.grid(row = self.textRow +1, columnspan=self.textColumn + 1, rowspan = 1, sticky = E+W+S+N, pady=4, padx=80)
         self.entry.bind('<Return>', self.returnEnter)
         
         # for press_key in self.pressCommand.keys():
@@ -244,8 +248,8 @@ class Example(Frame):
         self.list.bind('<<ListboxSelect>>', self.listbox_click)
         self.setMapShow()
 
-        self.enter = Button(self, text="Enter", command=self.returnButton)
-        self.enter.grid(row=self.textRow +1, column=self.textColumn +1)
+        # self.enter = Button(self, text="Enter", command=self.returnButton)
+        # self.enter.grid(row=self.textRow +1, column=self.textColumn +1)
 
     def addner(self):
         # 点击实体后获取内容
@@ -404,7 +408,7 @@ class Example(Frame):
         """开启推荐标注模式"""
         self.recommendFlag = True
         self.RecommendModelFlag.config(text = str(self.recommendFlag))
-        tkMessageBox.showinfo("Recommend Model", "Recommend Model has been activated!")
+        tkMessageBox.showinfo("Recommend Model", "已经开启自动推荐模式!")
 
     def setInNotRecommendModel(self):
         """关闭推荐标注模式"""
@@ -413,12 +417,12 @@ class Example(Frame):
         content = self.getText()
         content = removeRecommendContent(content,self.recommendRe)
         self.writeFile(self.fileName, content, '1.0')
-        tkMessageBox.showinfo("Recommend Model", "Recommend Model has been deactivated!")
+        tkMessageBox.showinfo("Recommend Model", "已经关闭自动推荐模式!")
 
     def onOpen(self):
         """打开文件"""
         # ftypes = [('all files', '.*'), ('text files', '.txt'), ('ann files', '.ann')]
-        ftypes = [ ('all files', '.txt*'),('text files', '.txt'), ('ann files', '.ann')]
+        ftypes = [ ('text files', '.txt'),('all files', '.txt*'), ('ann files', '.ann')]
         dlg = tkFileDialog.Open(self, filetypes = ftypes,title="选择需要标记的文本")
         # file_opt = options =  {}
         # options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
@@ -439,9 +443,10 @@ class Example(Frame):
             # self.initAnnotate()
             self.text.mark_set(INSERT, "1.0")
             self.setCursorLabel(self.text.index(INSERT))
-
+            self.setLog("开始提取实体")
             # 获取实体
             ner_list=getNer(text)
+            self.setLog("提取实体结束")
             # self.NerList.config(text=ner_list[0])
             # self.list.insert(ner_list)	#我们也可以直接添加
             self.list.delete(0,self.list.size())
@@ -450,6 +455,41 @@ class Example(Frame):
                 self.list.insert(0,item)
             # self.list.pack()
             # self.setMapShow()
+    # def onOpenAnn(self):
+    #     """打开文件"""
+    #     # ftypes = [('all files', '.*'), ('text files', '.txt'), ('ann files', '.ann')]
+    #     ftypes = [ ('ann files', '.ann')]
+    #     dlg = tkFileDialog.Open(self, filetypes = ftypes,title="选择需要标记的文本")
+    #     # file_opt = options =  {}
+    #     # options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
+    #     # dlg = tkFileDialog.askopenfilename(**options)
+    #     # dlg.top(width=600)
+    #     fl = dlg.show()
+    #     if fl != '':
+    #         self.text.delete("1.0",END)
+    #         text = self.readFile(fl)
+    #         #设置默认原文
+    #         self.org_txt=text
+    #         print("原文：",self.org_txt[:50])
+    #         self.text.insert(END, text)
+            
+    #         self.setNameLabel("File: " + fl)
+    #         self.autoLoadNewFile(self.fileName, "1.0")
+    #         # self.setDisplay()
+    #         # self.initAnnotate()
+    #         self.text.mark_set(INSERT, "1.0")
+    #         self.setCursorLabel(self.text.index(INSERT))
+
+    #         # 获取实体
+    #         ner_list=getNer(text)
+    #         # self.NerList.config(text=ner_list[0])
+    #         # self.list.insert(ner_list)	#我们也可以直接添加
+    #         self.list.delete(0,self.list.size())
+    #         ner_list=list(set(ner_list))
+    #         for item in ner_list:
+    #             self.list.insert(0,item)
+    #         # self.list.pack()
+    #         # self.setMapShow()
         
     def readFile(self, filename):
         """读文件"""
@@ -469,7 +509,11 @@ class Example(Frame):
         _underline=0
         fnt = tkFont.Font(family= _family,size= _size,weight= _weight,underline= _underline)
         Text(self, font=fnt)
-    
+    def setLog(self, text):
+        """
+        设置日志
+        """
+        self.log.config(text=text)  
     def setNameLabel(self, new_file):
         self.lbl.config(text=new_file)
 
@@ -912,9 +956,12 @@ class Example(Frame):
                 self.pressCommand = pickle.load(fp)
         hight = len(self.pressCommand)
         width = 2
-        row = 0
+        row = 1
         mapLabel = Label(self, text =u"快捷键", foreground="blue", font=(self.textFontStyle, 11, "bold"))
-        mapLabel.grid(row=1, column = self.textColumn +1,columnspan=2, rowspan = 1, padx = 10)
+        mapLabel.grid(row=2, column = self.textColumn +2,columnspan=1, rowspan = 1, padx = 10)
+
+        mapDes = Label(self, text =u"描述", foreground="blue", font=(self.textFontStyle, 11, "bold"))
+        mapDes.grid(row=2, column = self.textColumn +3,columnspan=1, rowspan = 1, padx = 10)
         self.labelEntryList = []
         self.shortcutLabelList = []
         for key in sorted(self.pressCommand):
@@ -978,9 +1025,13 @@ class Example(Frame):
         tkMessageBox.showinfo(u"导出信息", showMessage)
 
 def getNer(text):
+    Ner_Marker=Marker(model_path="./tkitfiles/tmarker_bert_ner")
+    Ner_Marker.load_model()
     one=Ner_Marker.pre_ner(text)
     return one
 def getDes(ner,text):
+    Pred_Marker=Marker(model_path="./tkitfiles/miaoshu")
+    Pred_Marker.load_model()
     one=Pred_Marker.pre(ner,text)
 
     return list(set(one))
@@ -1127,13 +1178,19 @@ def decompositCommand(command_string):
     return command_list
 	
 
+
+
 def main():
     print(u"启动 YEDDA 标注工具！")
     print((u"操作系统：%s")%(platform.system()))
     root = Tk()
-    root.geometry("1300x700+200+200")
-    app = Example(root)
-    app.setFont(17)
+
+    # root.geometry("1300x700+200+200")
+    #最大化
+    w, h = root.maxsize()
+    root.geometry("{}x{}".format(w, h)) #看好了，中间的是小写字母x
+    app = YEDDA(root)
+    app.setFont(13)
     root.mainloop()
 
 
