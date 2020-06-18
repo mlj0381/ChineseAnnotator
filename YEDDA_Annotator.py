@@ -422,7 +422,8 @@ class YEDDA(Frame):
     def onOpen(self):
         """打开文件"""
         # ftypes = [('all files', '.*'), ('text files', '.txt'), ('ann files', '.ann')]
-        ftypes = [ ('text files', '.txt'),('all files', '.txt*'), ('ann files', '.ann')]
+        # ftypes = [ ('text files', '.txt'),('all files', '.txt*'), ('ann files', '.ann')]
+        ftypes = [ ('all files', '.txt*'),('text files', '.txt'), ('ann files', '.ann')]
         dlg = tkFileDialog.Open(self, filetypes = ftypes,title="选择需要标记的文本")
         # file_opt = options =  {}
         # options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
