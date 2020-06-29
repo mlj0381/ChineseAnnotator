@@ -433,6 +433,11 @@ class YEDDA(Frame):
         if fl != '':
             self.text.delete("1.0",END)
             text = self.readFile(fl)
+
+            #对txt文本限制为500字
+            if fl.endswith(".txt"):
+                text=text[:500]
+
             #设置默认原文
             self.org_txt=text
             print("原文：",self.org_txt[:50])
